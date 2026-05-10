@@ -1,0 +1,5 @@
+D:\Programas\steamapps\common\RimWorld\Mods\VehicleRaid Framework\Assemblies\VehicleRaidFramework.dll
+D:\Programas\steamapps\common\RimWorld\Mods\VehicleRaid Framework\Source\obj\Debug\VehicleRaidFramework.csproj.AssemblyReference.cache
+D:\Programas\steamapps\common\RimWorld\Mods\VehicleRaid Framework\Source\obj\Debug\VehicleRaidFramework.GeneratedMSBuildEditorConfig.editorconfig
+D:\Programas\steamapps\common\RimWorld\Mods\VehicleRaid Framework\Source\obj\Debug\VehicleRaidFramework.csproj.CoreCompileInputs.cache
+D:\Programas\steamapps\common\RimWorld\Mods\VehicleRaid Framework\Source\obj\Debug\VehicleRaidFramework.dll

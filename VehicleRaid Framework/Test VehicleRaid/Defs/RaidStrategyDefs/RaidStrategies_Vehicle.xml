@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+	<RaidStrategyDef> 
+		<defName>VRF_VehicleAssault</defName>
+		<workerClass>VehicleRaidFramework.RaidStrategyWorker_VehicleAssault</workerClass>
+		<label>armored assault</label>
+		<description>A coordinated armored assault prioritized on heavy vehicles. This tactical division uses
+			specialized logistics to keep tanks fueled and operational during the breach.</description>
+		<selectionWeightPerPointsCurve>
+			<points>
+				<li>(2000, 0)</li>
+				<li>(5000, 1.5)</li>
+				<li>(15000, 3.0)</li>
+			</points>
+		</selectionWeightPerPointsCurve>
+		<pointsFactorCurve>
+			<points>
+				<li>(0, 1.0)</li>
+			</points>
+		</pointsFactorCurve>
+		<arrivalTextFriendly>A vehicle division from {0} has arrived to support you!</arrivalTextFriendly>
+		<arrivalTextEnemy>An armored assault from {0} is approaching! They are using heavy vehicles to breach your
+			defenses.</arrivalTextEnemy>
+		<letterLabelEnemy>Armored Assault</letterLabelEnemy>
+		<arriveModes>
+			<li>EdgeWalkIn</li>
+		</arriveModes>
+
+		<modExtensions>
+			<li Class="VehicleRaidFramework.VehicleRaidExtension">
+				
+				<factionDef>Empire</factionDef> 
+				<vehicleOptions>
+			<li>
+				<kindDef>VVE_Bulldog_NPC_Kind</kindDef>
+				<weight>10</weight>
+				<forceCount>1</forceCount>
+				<spawnVehicle>false</spawnVehicle>
+				<pawnFollowVehicle>true</pawnFollowVehicle>
+				<cargoItems>
+			<li>
+				<thingDef>Steel</thingDef>
+				<count>60~80</count>
+			</li>
+			<li>
+				<thingDef>Chemfuel</thingDef>
+				<count>50~70</count>
+			</li>
+			</cargoItems>
+			</li>
+			<li>
+				<kindDef>VVE_Highwayman_Kind</kindDef>
+				<weight>5</weight>
+				<forceCount>1</forceCount>
+				<spawnVehicle>false</spawnVehicle>
+				<cargoItems>
+			<li>
+				<thingDef>Steel</thingDef>
+				<count>60~80</count>
+			</li>
+			<li>
+				<thingDef>Chemfuel</thingDef>
+				<count>50~70</count>
+			</li>
+			</cargoItems>
+			</li>
+			</vehicleOptions>
+			<infantryPointsFraction>0.9</infantryPointsFraction>
+			<spawnInfantry>true</spawnInfantry> 
+			<stayTicks>30000</stayTicks>
+			<forcedPawns>
+				<li>Empire_Fighter_Cataphract</li>
+				<li>Empire_Fighter_Janissary</li>
+			</forcedPawns>
+			<letterLabel>Armored Assault!</letterLabel>
+			<letterText>An armored division from {0} has arrived. They are focusing on breaking through with heavy
+				vehicles.</letterText>
+			</li>
+		</modExtensions>
+	</RaidStrategyDef>
+
+</Defs>

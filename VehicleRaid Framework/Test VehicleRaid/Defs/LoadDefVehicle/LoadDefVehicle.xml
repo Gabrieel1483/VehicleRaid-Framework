@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <PawnKindDef>
+  <!-- Here's the vehicle's "def" -->
+    <defName>VVE_Bulldog_NPC_Kind</defName> <!-- Here you will put the most important thing: _Kind, it's an identifier for my framework -->
+    <label>bulldog vehicle</label>  
+    <race>VVE_Bulldog_NPC</race>      <!-- Here's the vehicle's "def" -->
+    <combatPower>3000</combatPower>
+    <lifeStages>
+      <li>
+        <bodyGraphicData>
+          <texPath>Things/Vehicles/Tier2/Tier2_Tank/Tier2_Tank</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>(3,3)</drawSize>
+        </bodyGraphicData>
+      </li>
+    </lifeStages>
+  </PawnKindDef>
+
+  <PawnKindDef>
+    <defName>VVE_Highwayman_Kind</defName>
+    <label>highwayman vehicle</label>
+    <race>VVE_Highwayman</race> 
+    <combatPower>2500</combatPower>
+    <lifeStages>
+      <li>
+        <bodyGraphicData>
+          <texPath>Things/Vehicles/Tier1/Tier1_Highwayman/Tier1_Highwayman</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>(3,3)</drawSize>
+        </bodyGraphicData>
+      </li>
+    </lifeStages>
+  </PawnKindDef>
+
+    <PawnKindDef>
+    <defName>VVE_Burya_Kind</defName>
+    <label>Burya vehicle</label>
+    <race>VVE_Burya</race> 
+    <combatPower>2500</combatPower>
+    <lifeStages>
+      <li>
+        <bodyGraphicData>
+          <texPath>Things/Vehicles/Tier1/Tier1_Highwayman/Tier1_Highwayman</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>(3,3)</drawSize>
+        </bodyGraphicData>
+      </li>
+    </lifeStages>
+  </PawnKindDef>
+
+    <PawnKindDef>
+    <defName>VVE_Scytheman_Kind</defName>
+    <label>Scytheman vehicle</label>
+    <race>VVE_Scytheman</race> 
+    <combatPower>2500</combatPower>
+    <lifeStages>
+      <li>
+        <bodyGraphicData>
+          <texPath>Things/Vehicles/Tier1/Tier1_RocketTruck/Tier1_RocketTruck</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>(3,3)</drawSize>
+        </bodyGraphicData>
+      </li>
+    </lifeStages>
+  </PawnKindDef>
+
+</Defs>
+

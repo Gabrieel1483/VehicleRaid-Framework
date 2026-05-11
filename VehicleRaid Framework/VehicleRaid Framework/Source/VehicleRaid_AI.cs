@@ -95,10 +95,17 @@ namespace VehicleRaidFramework
             var leaderManager = this.lord.Map.GetComponent<VRF_LeaderManager>();
             leaderManager?.ForceRefresh();
             
+            List<Pawn> pawnsToRemove = new List<Pawn>();
+            
             foreach (Pawn pawn in this.lord.ownedPawns)
             {
-                if (pawn is VehiclePawn)
+                if (pawn is VehiclePawn v)
                 {
+                    if (!CrewManager.HasOperationalDriver(v))
+                    {
+                        pawnsToRemove.Add(v);
+                        continue;
+                    }
                     pawn.mindState.duty = new PawnDuty(VRF_DutyDefOf.VRF_VehicleSearchAndDestroy);
                 }
                 else
@@ -113,6 +120,13 @@ namespace VehicleRaidFramework
                         pawn.mindState.duty = new PawnDuty(VRF_DutyDefOf.VRF_InfantryAssault);
                     }
                 }
+            }
+            
+            foreach (Pawn p in pawnsToRemove)
+            {
+                p.mindState.duty = null;
+                if (p.jobs != null) p.jobs.EndCurrentJob(JobCondition.InterruptForced);
+                this.lord.RemovePawn(p);
             }
         }
 
@@ -134,12 +148,32 @@ namespace VehicleRaidFramework
 
         public override void UpdateAllDuties()
         {
+            List<Pawn> pawnsToRemove = new List<Pawn>();
+        
             foreach (Pawn pawn in this.lord.ownedPawns)
             {
-                if (pawn is VehiclePawn)
-                    pawn.mindState.duty = new PawnDuty(DefDatabase<DutyDef>.GetNamedSilentFail("VRF_VehicleExitMap") ?? DutyDefOf.ExitMapBest);
+                if (pawn is VehiclePawn v)
+                {
+                    if (!CrewManager.CanMove(v) || !CrewManager.HasOperationalDriver(v))
+                    {
+                        pawnsToRemove.Add(v);
+                    }
+                    else
+                    {
+                        pawn.mindState.duty = new PawnDuty(DefDatabase<DutyDef>.GetNamedSilentFail("VRF_VehicleExitMap") ?? DutyDefOf.ExitMapBest);
+                    }
+                }
                 else
+                {
                     pawn.mindState.duty = new PawnDuty(VRF_DutyDefOf.VRF_InfantryExit);
+                }
+            }
+            
+            foreach (Pawn p in pawnsToRemove)
+            {
+                p.mindState.duty = null;
+                if (p.jobs != null) p.jobs.EndCurrentJob(JobCondition.InterruptForced);
+                this.lord.RemovePawn(p);
             }
         }
     }

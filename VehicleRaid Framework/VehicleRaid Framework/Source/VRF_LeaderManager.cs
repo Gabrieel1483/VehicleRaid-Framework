@@ -54,7 +54,7 @@ namespace VehicleRaidFramework
 
                 foreach (Pawn p in candidates)
                 {
-                    if (p is VehiclePawn v && v.Faction == faction && !v.Dead && !v.Destroyed && v.Spawned)
+                    if (p is VehiclePawn v && v.Faction == faction && !v.Dead && !v.Destroyed && v.Spawned && CrewManager.HasOperationalDriver(v))
                     {
                         if (firstAnyVehicleInCandidates == null) firstAnyVehicleInCandidates = v;
 
@@ -85,7 +85,7 @@ namespace VehicleRaidFramework
             foreach (var kvp in leaderVehicles)
             {
                 VehiclePawn v = kvp.Key;
-                if (v != null && !v.Dead && !v.Destroyed && v.Spawned && v.Faction == faction && v.Map == map)
+                if (v != null && !v.Dead && !v.Destroyed && v.Spawned && v.Faction == faction && v.Map == map && CrewManager.HasOperationalDriver(v))
                 {
                     if (kvp.Value < bestPriority)
                     {
@@ -99,7 +99,7 @@ namespace VehicleRaidFramework
             {
                 foreach (Pawn p in map.mapPawns.AllPawnsSpawned)
                 {
-                    if (p is VehiclePawn v && v.Faction == faction && !v.Dead && !v.Destroyed && v.Spawned)
+                    if (p is VehiclePawn v && v.Faction == faction && !v.Dead && !v.Destroyed && v.Spawned && CrewManager.HasOperationalDriver(v))
                     {
                         bestLeader = v;
                         break;

@@ -13,10 +13,15 @@ namespace VehicleRaidFramework
             VehicleRaidExtension ext = GetExtension(parms);
             if (ext == null) return false;
 
-            if (ext.factionDef != null && (parms.faction == null || parms.faction.def != ext.factionDef))
+            if (!ext.factionDefs.NullOrEmpty())
             {
-                return false;
+                if (parms.faction == null || !ext.factionDefs.Contains(parms.faction.def)) return false;
             }
+            else if (ext.factionDef != null)
+            {
+                if (parms.faction == null || parms.faction.def != ext.factionDef) return false;
+            }
+
 
             return base.CanUseWith(parms, groupKind);
         }

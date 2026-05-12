@@ -2,10 +2,9 @@
 <Defs>
 
   <PawnKindDef>
-  <!-- Here's the vehicle's "def" -->
-    <defName>VVE_Bulldog_NPC_Kind</defName> <!-- Here you will put the most important thing: _Kind, it's an identifier for my framework -->
-    <label>bulldog vehicle</label>  
-    <race>VVE_Bulldog_NPC</race>      <!-- Here's the vehicle's "def" -->
+    <defName>VVE_Bulldog_NPC_Kind</defName>
+    <label>bulldog vehicle</label>
+    <race>VVE_Bulldog_NPC</race> 
     <combatPower>3000</combatPower>
     <lifeStages>
       <li>
@@ -38,7 +37,7 @@
     <defName>VVE_Burya_Kind</defName>
     <label>Burya vehicle</label>
     <race>VVE_Burya</race> 
-    <combatPower>2500</combatPower>
+    <combatPower>3000</combatPower>
     <lifeStages>
       <li>
         <bodyGraphicData>
@@ -54,7 +53,7 @@
     <defName>VVE_Scytheman_Kind</defName>
     <label>Scytheman vehicle</label>
     <race>VVE_Scytheman</race> 
-    <combatPower>2500</combatPower>
+    <combatPower>1000</combatPower>
     <lifeStages>
       <li>
         <bodyGraphicData>

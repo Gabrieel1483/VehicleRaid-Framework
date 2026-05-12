@@ -19,7 +19,6 @@
 							</subNodes>
 						</li>
 
-						
 						<li Class="VehicleRaidFramework.VRF_JobGiver_Mortar"/>
 
 						
@@ -48,12 +47,35 @@
 		</thinkNode>
 	</DutyDef>
 
+	<DutyDef>
+		<defName>VRF_VehicleDefendBase</defName>
+		<thinkNode Class="ThinkNode_Priority">
+			<subNodes>
+				<li Class="Vehicles.ThinkNode_ConditionalVehicle">
+					<subNodes>
+						<li Class="Vehicles.ThinkNode_ConditionalVehicleState">
+							<canMove>false</canMove>
+							<hasPassengers>true</hasPassengers>
+							<subNodes>
+								<li Class="Vehicles.ThinkNode_ExecuteAction">
+									<action>Vehicles.VehicleActions.DisembarkAll</action>
+								</li>
+							</subNodes>
+						</li>
+						<li Class="VehicleRaidFramework.VRF_JobGiver_Mortar"/>
+						<li Class="Vehicles.JobGiver_AwaitOrders"/>
+					</subNodes>
+				</li>
+			</subNodes>
+		</thinkNode>
+	</DutyDef>
+
 	
 	<DutyDef>
 		<defName>VRF_InfantryAssault</defName>
 		<thinkNode Class="ThinkNode_Priority">
 			<subNodes>
-				
+				<li Class="VehicleRaidFramework.JobGiver_InfantryBoardNearbyVehicle" />
 				<li Class="JobGiver_TakeCombatEnhancingDrug" />
 				<li Class="JobGiver_AIFightEnemies">
 					<targetAcquireRadius>65</targetAcquireRadius>
@@ -61,6 +83,7 @@
 				</li>
 				<li Class="JobGiver_AITrashColonyClose" />
 				<li Class="JobGiver_AITrashBuildingsDistant" />
+				<li Class="VehicleRaidFramework.JobGiver_FollowVehicle" />
 				<li Class="JobGiver_AIGotoNearestHostile" />
 			</subNodes>
 		</thinkNode>

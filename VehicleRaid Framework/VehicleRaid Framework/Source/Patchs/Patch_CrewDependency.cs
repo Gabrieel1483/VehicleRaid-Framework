@@ -10,43 +10,29 @@ using UnityEngine;
 
 namespace VehicleRaidFramework
 {
-
-
-
-
-
-
     [HarmonyPatch(typeof(VehiclePawn), "Tick")]
     public static class Patch_RaidVehicle_CrewDependency
     {
         static void Postfix(VehiclePawn __instance)
         {
-
-            if ( __instance == null || !__instance.Spawned || __instance.Destroyed || __instance.Map == null || !__instance.IsHashIntervalTick(250)) return;
+            if (__instance == null || !__instance.Spawned || __instance.Destroyed || __instance.Map == null || !__instance.IsHashIntervalTick(250)) return;
 
             if (__instance.Faction == null || __instance.Faction.IsPlayer) return;
 
-            if (__instance.IsHashIntervalTick(250))
-            {
-                CrewManager.ReassignCrew(__instance);
-                CrewManager.CheckAbandonment(__instance);
-                CrewManager.CheckRetreat(__instance);
-            }
+            CrewManager.ReassignCrew(__instance);
+            CrewManager.CheckAbandonment(__instance);
+            CrewManager.CheckRetreat(__instance);
 
             Lord lord = __instance.GetLord();
             if (lord != null)
             {
-
-                if (lord.LordJob is LordJob_VehicleRaid && __instance.IsHashIntervalTick(1250)) 
+                if (lord.LordJob is LordJob_VehicleRaid && __instance.IsHashIntervalTick(1250))
                 {
                     FeedCrewFromInventory(__instance);
                     RefuelFromInventory(__instance);
                 }
 
-                if (__instance.IsHashIntervalTick(250))
-                {
-                    HandleOverlappingPawns(__instance);
-                }
+                HandleOverlappingPawns(__instance);
 
                 if (!__instance.AllPawnsAboard.Any() && (__instance.Dead || __instance.Destroyed))
                 {
@@ -84,9 +70,10 @@ namespace VehicleRaidFramework
                 }
             }
         }
+
         private static void RefuelFromInventory(VehiclePawn vehicle)
         {
-            CompFueledTravel comp = vehicle.CompFueledTravel;
+            CompFueledTravel comp = vehicle.GetComp<CompFueledTravel>();
             if (comp == null || comp.Props.ElectricPowered || comp.FuelPercent > 0.10f) return;
 
             float needed = comp.FuelCapacity - comp.Fuel;
@@ -100,20 +87,17 @@ namespace VehicleRaidFramework
             {
                 int toConsume = Mathf.Min(availableFuel, Mathf.CeilToInt(needed));
                 comp.ConsumeFuelFromInventory(toConsume);
-
-                if (vehicle.ignition != null && !vehicle.ignition.Drafted && comp.Fuel > 0)
-                {
-                    vehicle.ignition.Drafted = true;
-                }
+                
+                Patch_VehicleNPCOnOff.UpdateVehiclePower(vehicle);
             }
         }
+
         private static void HandleOverlappingPawns(VehiclePawn vehicle)
         {
             if (vehicle == null || !vehicle.Spawned || vehicle.Destroyed || vehicle.Map == null || vehicle.Faction == null) return;
 
             CellRect rect = vehicle.OccupiedRect();
             Map map = vehicle.Map;
-            bool anyPawnFound = false;
 
             foreach (IntVec3 cell in rect)
             {
@@ -122,21 +106,16 @@ namespace VehicleRaidFramework
                 List<Thing> thingList = cell.GetThingList(map);
                 for (int i = thingList.Count - 1; i >= 0; i--)
                 {
-
                     if (thingList[i] is Pawn p && p != vehicle && !(p is VehiclePawn) && !vehicle.handlers.Any(h => h.thingOwner.Contains(p)))
                     {
-                        anyPawnFound = true;
                         ResolvePawnOverlap(vehicle, p);
                     }
                 }
             }
-
-
         }
 
         private static void ResolvePawnOverlap(VehiclePawn vehicle, Pawn pawn)
         {
-
             ApplyOverlapDamage(vehicle, pawn);
 
             Map map = vehicle.Map;
@@ -178,12 +157,10 @@ namespace VehicleRaidFramework
             {
                 damageMultiplier = 0f;
             }
-
             else if (vehicle.Faction.RelationKindWith(pawn.Faction) == FactionRelationKind.Neutral)
             {
                 damageMultiplier = 0.1f;
             }
-
             else
             {
                 damageMultiplier = 1.0f;
@@ -191,7 +168,6 @@ namespace VehicleRaidFramework
 
             if (damageMultiplier > 0)
             {
-
                 var damages = VehiclePawn.CalculateImpactDamage(pawn, vehicle, 5f);
                 float pawnDamage = damages.pawnDamage * damageMultiplier;
 
@@ -204,4 +180,3 @@ namespace VehicleRaidFramework
         }
     }
 }
-

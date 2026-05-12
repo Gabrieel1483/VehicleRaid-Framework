@@ -18,18 +18,18 @@ namespace VehicleRaidFramework
         public static bool Prefix(IncidentParms parms, IncidentWorker_Raid __instance, ref bool __result)
         {
 
-            if (parms.raidStrategy?.defName != "VRF_VehicleAssault") return true;
-
-            Map map = (Map)parms.target;
-            if (map == null) return true;
-
-            VehicleRaidExtension ext = parms.raidStrategy.GetModExtension<VehicleRaidExtension>();
+            VehicleRaidExtension ext = null;
+            if (parms.raidStrategy != null) ext = parms.raidStrategy.GetModExtension<VehicleRaidExtension>();
+            
             if (ext == null && parms.faction?.def != null)
             {
                 ext = parms.faction.def.GetModExtension<VehicleRaidExtension>();
             }
 
             if (ext == null) return true;
+
+            Map map = (Map)parms.target;
+            if (map == null) return true;
 
             Faction faction = parms.faction ?? Find.FactionManager.RandomEnemyFaction();
             if (faction == null) return true;

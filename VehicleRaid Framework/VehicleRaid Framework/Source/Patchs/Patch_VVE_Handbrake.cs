@@ -19,7 +19,6 @@ namespace VehicleRaidFramework
     [StaticConstructorOnStartup]
     public static class Patch_VVE_Handbrake
     {
-        private static bool patchApplied = false;
 
         static Patch_VVE_Handbrake()
         {
@@ -62,7 +61,6 @@ namespace VehicleRaidFramework
                 harmony.Patch(slowdownMethod,
                     prefix: new HarmonyMethod(typeof(Patch_VVE_Handbrake), nameof(Slowdown_Prefix)),
                     postfix: new HarmonyMethod(typeof(Patch_VVE_Handbrake), nameof(Slowdown_Postfix)));
-                patchApplied = true;
             }
             else
             {
@@ -70,8 +68,6 @@ namespace VehicleRaidFramework
             }
         }
 
-        [ThreadStatic]
-        private static bool suppressHandbrakeEffects;
 
 
 
@@ -92,7 +88,6 @@ namespace VehicleRaidFramework
 
                 if (vehicle.Faction != null && !vehicle.Faction.IsPlayer)
                 {
-                    suppressHandbrakeEffects = true;
                     __state = true;
 
                     Type settingsType = null;
@@ -134,8 +129,6 @@ namespace VehicleRaidFramework
 
             try
             {
-                suppressHandbrakeEffects = false;
-
                 Type settingsType = null;
                 foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
                 {

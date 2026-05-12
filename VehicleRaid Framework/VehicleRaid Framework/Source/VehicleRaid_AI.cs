@@ -18,6 +18,7 @@ namespace VehicleRaidFramework
     {
         private Faction assaulterFaction;
         private int stayTicks = 30000;
+        public bool updatingDuties = false;
         private static readonly IntRange AssaultTimeRange = new IntRange(30000, 45000);
 
         public LordJob_VehicleRaid() { }
@@ -92,48 +93,70 @@ namespace VehicleRaidFramework
 
         public override void UpdateAllDuties()
         {
-            var leaderManager = this.lord.Map.GetComponent<VRF_LeaderManager>();
-            leaderManager?.ForceRefresh();
-            
-            List<Pawn> pawnsToRemove = new List<Pawn>();
-            
-            foreach (Pawn pawn in this.lord.ownedPawns)
+            var vJob = this.lord.LordJob as LordJob_VehicleRaid;
+            if (vJob != null) vJob.updatingDuties = true;
+
+            try
             {
-                if (pawn is VehiclePawn v)
+                var leaderManager = this.lord.Map.GetComponent<VRF_LeaderManager>();
+                leaderManager?.ForceRefresh();
+                
+                List<Pawn> pawnsToRemove = new List<Pawn>();
+                
+                foreach (Pawn pawn in this.lord.ownedPawns)
                 {
-                    if (!CrewManager.HasOperationalDriver(v))
+                    if (pawn is VehiclePawn v)
                     {
-                        pawnsToRemove.Add(v);
-                        continue;
-                    }
-                    pawn.mindState.duty = new PawnDuty(VRF_DutyDefOf.VRF_VehicleSearchAndDestroy);
-                }
-                else
-                {
-                    VehiclePawn leader = leaderManager?.GetBestLeader(pawn.Faction, this.lord.ownedPawns);
-                    if (leader != null)
-                    {
-                        pawn.mindState.duty = new PawnDuty(DutyDefOf.Escort, leader, 8f);
+                        if (v.mindState.duty?.def.defName == "VRF_VehicleExitMap" || v.mindState.duty?.def == DutyDefOf.ExitMapBest)
+                        {
+                            continue;
+                        }
+
+                        if (CrewManager.HasOperationalDriver(v) || CrewManager.AnyFriendlyInfantryNearby(v) || CrewManager.IsAnyPawnBoarding(v))
+                        {
+                            var dutyDef = VRF_DutyDefOf.VRF_VehicleSearchAndDestroy ?? DefDatabase<DutyDef>.GetNamed("VRF_VehicleSearchAndDestroy", false);
+                            if (pawn.mindState.duty?.def != dutyDef)
+                            {
+                                pawn.mindState.duty = new PawnDuty(dutyDef);
+                            }
+                        }
+                        else
+                        {
+                            pawnsToRemove.Add(v);
+                        }
                     }
                     else
                     {
-                        pawn.mindState.duty = new PawnDuty(VRF_DutyDefOf.VRF_InfantryAssault);
+                        var dutyDef = VRF_DutyDefOf.VRF_InfantryAssault ?? DefDatabase<DutyDef>.GetNamed("VRF_InfantryAssault", false);
+                        if (pawn.mindState.duty?.def != dutyDef)
+                        {
+                            pawn.mindState.duty = new PawnDuty(dutyDef);
+                        }
                     }
                 }
+                
+                foreach (Pawn p in pawnsToRemove)
+                {
+                    if (p.jobs != null)
+                    {
+                        p.jobs.StopAll();
+                        p.jobs.StartJob(JobMaker.MakeJob(JobDefOf.Wait_Combat, 1000, true), JobCondition.InterruptForced);
+                    }
+                    p.mindState.duty = null;
+                    this.lord.RemovePawn(p);
+                }
             }
-            
-            foreach (Pawn p in pawnsToRemove)
+            finally
             {
-                p.mindState.duty = null;
-                if (p.jobs != null) p.jobs.EndCurrentJob(JobCondition.InterruptForced);
-                this.lord.RemovePawn(p);
+                if (vJob != null) vJob.updatingDuties = false;
             }
         }
 
         public override void Notify_PawnLost(Pawn p, PawnLostCondition condition)
         {
             base.Notify_PawnLost(p, condition);
-            if (p is VehiclePawn)
+            var vJob = this.lord.LordJob as LordJob_VehicleRaid;
+            if (p is VehiclePawn && !(vJob?.updatingDuties ?? false))
             {
                 var leaderManager = this.lord.Map.GetComponent<VRF_LeaderManager>();
                 leaderManager?.ForceRefresh();
@@ -148,32 +171,54 @@ namespace VehicleRaidFramework
 
         public override void UpdateAllDuties()
         {
-            List<Pawn> pawnsToRemove = new List<Pawn>();
-        
-            foreach (Pawn pawn in this.lord.ownedPawns)
+            var vJob = this.lord.LordJob as LordJob_VehicleRaid;
+            if (vJob != null) vJob.updatingDuties = true;
+
+            try
             {
-                if (pawn is VehiclePawn v)
+                List<Pawn> pawnsToRemove = new List<Pawn>();
+            
+                foreach (Pawn pawn in this.lord.ownedPawns)
                 {
-                    if (!CrewManager.CanMove(v) || !CrewManager.HasOperationalDriver(v))
+                    if (pawn is VehiclePawn v)
                     {
-                        pawnsToRemove.Add(v);
+                        if (CrewManager.HasOperationalDriver(v) || CrewManager.AnyFriendlyInfantryNearby(v) || CrewManager.IsAnyPawnBoarding(v))
+                        {
+                            var dutyDef = VRF_DutyDefOf.VRF_VehicleExitMap ?? DefDatabase<DutyDef>.GetNamed("VRF_VehicleExitMap", false) ?? DutyDefOf.ExitMapBest;
+                            if (pawn.mindState.duty?.def != dutyDef)
+                            {
+                                pawn.mindState.duty = new PawnDuty(dutyDef);
+                            }
+                        }
+                        else
+                        {
+                            pawnsToRemove.Add(v);
+                        }
                     }
                     else
                     {
-                        pawn.mindState.duty = new PawnDuty(DefDatabase<DutyDef>.GetNamedSilentFail("VRF_VehicleExitMap") ?? DutyDefOf.ExitMapBest);
+                        var dutyDef = VRF_DutyDefOf.VRF_InfantryExit ?? DefDatabase<DutyDef>.GetNamed("VRF_InfantryExit", false) ?? DutyDefOf.ExitMapBest;
+                        if (pawn.mindState.duty?.def != dutyDef)
+                        {
+                            pawn.mindState.duty = new PawnDuty(dutyDef);
+                        }
                     }
                 }
-                else
+                
+                foreach (Pawn p in pawnsToRemove)
                 {
-                    pawn.mindState.duty = new PawnDuty(VRF_DutyDefOf.VRF_InfantryExit);
+                    if (p.jobs != null)
+                    {
+                        p.jobs.StopAll();
+                        p.jobs.StartJob(JobMaker.MakeJob(JobDefOf.Wait_Combat, 1000, true), JobCondition.InterruptForced);
+                    }
+                    p.mindState.duty = null;
+                    this.lord.RemovePawn(p);
                 }
             }
-            
-            foreach (Pawn p in pawnsToRemove)
+            finally
             {
-                p.mindState.duty = null;
-                if (p.jobs != null) p.jobs.EndCurrentJob(JobCondition.InterruptForced);
-                this.lord.RemovePawn(p);
+                if (vJob != null) vJob.updatingDuties = false;
             }
         }
     }
@@ -196,6 +241,12 @@ namespace VehicleRaidFramework
             if (!CrewManager.CanMove(vehicle))
             {
                 return JobMaker.MakeJob(JobDefOf.Wait_Combat, 2000, true);
+            }
+
+            if (CrewManager.IsAnyPawnBoarding(vehicle))
+            {
+                if (vehicle.CurJob != null && vehicle.CurJob.def == JobDefOf.Wait_Combat) return null;
+                return JobMaker.MakeJob(JobDefOf.Wait_Combat, 500, true);
             }
 
             if (CrewManager.IsOutOfAmmo(vehicle))
@@ -484,6 +535,12 @@ namespace VehicleRaidFramework
             if (!CrewManager.CanMove(vehicle))
             {
                 return JobMaker.MakeJob(JobDefOf.Wait_Combat, 2000, true);
+            }
+
+            if (CrewManager.IsAnyPawnBoarding(vehicle) && !CrewManager.HasOperationalDriver(vehicle))
+            {
+                if (vehicle.CurJob != null && vehicle.CurJob.def == JobDefOf.Wait_Combat) return null;
+                return JobMaker.MakeJob(JobDefOf.Wait_Combat, 500, true);
             }
 
             IntVec3 exitCell;

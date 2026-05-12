@@ -6,6 +6,7 @@ using Verse.AI;
 using RimWorld;
 using Vehicles;
 using HarmonyLib;
+using Verse.AI.Group;
 
 namespace VehicleRaidFramework
 {
@@ -36,9 +37,9 @@ namespace VehicleRaidFramework
                 h.thingOwner.Clear();
             }
 
-            var movementHandlers = handlers.Where(h => h.role != null && (h.role.HandlingTypes & HandlingType.Movement) != 0).ToList();
-            var turretHandlers = handlers.Where(h => h.role != null && (h.role.HandlingTypes & HandlingType.Turret) != 0).ToList();
-            var otherHandlers = handlers.Where(h => !movementHandlers.Contains(h) && !turretHandlers.Contains(h)).ToList();
+            var movementHandlers = handlers.Where(h => h?.role != null && (h.role.HandlingTypes & HandlingType.Movement) != 0).ToList();
+            var turretHandlers = handlers.Where(h => h?.role != null && (h.role.HandlingTypes & HandlingType.Turret) != 0).ToList();
+            var otherHandlers = handlers.Where(h => h != null && !movementHandlers.Contains(h) && !turretHandlers.Contains(h)).ToList();
 
             DistributePawns(consciousPawns, movementHandlers);
             DistributePawns(consciousPawns, turretHandlers);
@@ -48,17 +49,37 @@ namespace VehicleRaidFramework
             DistributePawns(downedPawns, turretHandlers);
             DistributePawns(downedPawns, movementHandlers);
 
+            SyncLord(vehicle);
             CheckRetreat(vehicle);
+        }
+
+        public static void SyncLord(VehiclePawn vehicle)
+        {
+            if (vehicle == null || vehicle.Faction == null || vehicle.Faction.IsPlayer || !vehicle.Spawned) return;
+
+            Lord vLord = vehicle.GetLord();
+            foreach (Pawn occupant in vehicle.AllPawnsAboard)
+            {
+                if (occupant.Dead || occupant.Downed) continue;
+                Lord pLord = occupant.GetLord();
+                if (pLord != null && pLord != vLord && pLord.LordJob is LordJob_VehicleRaid)
+                {
+                    if (vLord != null) vLord.RemovePawn(vehicle);
+                    pLord.AddPawn(vehicle);
+                    return;
+                }
+            }
         }
 
         private static void DistributePawns(List<Pawn> pawns, List<VehicleRoleHandler> targetHandlers)
         {
             foreach (var h in targetHandlers)
             {
+                if (h?.role == null) continue;
                 while (pawns.Count > 0 && h.thingOwner.Count < h.role.Slots)
                 {
                     Pawn p = pawns[0];
-                    h.thingOwner.TryAdd(p);
+                    if (p != null) h.thingOwner.TryAdd(p);
                     pawns.RemoveAt(0);
                 }
             }
@@ -73,6 +94,13 @@ namespace VehicleRaidFramework
             int totalConscious = vehicle.AllPawnsAboard.Count(p => !p.Dead && !p.Downed);
             if (totalConscious == 1 && HasOperationalDriver(vehicle))
             {
+                bool hasPrioritySlots = vehicle.handlers.Any(h => h.role != null && (h.role.HandlingTypes & (HandlingType.Movement | HandlingType.Turret)) != 0 && h.thingOwner.Count < h.role.Slots);
+                
+                if (hasPrioritySlots && (AnyFriendlyInfantryNearby(vehicle) || IsAnyPawnBoarding(vehicle)))
+                {
+                    return;
+                }
+
                 bool isDesignedForMore = vehicle.handlers.Any(h => h.role != null && (h.role.HandlingTypes & HandlingType.Movement) == 0 && h.role.Slots > 0);
                 if (isDesignedForMore)
                 {
@@ -256,6 +284,41 @@ namespace VehicleRaidFramework
                 p.mindState.duty = new PawnDuty(DutyDefOf.AssaultColony);
                 p.jobs.StopAll();
             }
+        }
+
+        public static bool AnyFriendlyInfantryNearby(VehiclePawn vehicle)
+        {
+            if (!vehicle.Spawned || vehicle.Map == null) return false;
+
+            float radius = 50f;
+            float radiusSq = radius * radius;
+            
+            foreach (Pawn p in vehicle.Map.mapPawns.AllPawnsSpawned)
+            {
+                if (p != vehicle && p.Faction == vehicle.Faction && !p.Dead && !p.Downed && p.Spawned && !(p is VehiclePawn))
+                {
+                    if (p.Position.DistanceToSquared(vehicle.Position) <= radiusSq)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static bool IsAnyPawnBoarding(VehiclePawn vehicle)
+        {
+            if (vehicle.Map == null) return false;
+            var mapPawns = vehicle.Map.mapPawns.AllPawnsSpawned;
+            for (int i = 0; i < mapPawns.Count; i++)
+            {
+                Pawn p = mapPawns[i];
+                if (p.CurJob != null && p.CurJob.def.defName == "Board" && p.CurJob.targetA.Thing == vehicle)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 

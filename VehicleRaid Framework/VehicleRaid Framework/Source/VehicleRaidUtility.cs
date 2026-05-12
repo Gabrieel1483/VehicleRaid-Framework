@@ -193,7 +193,7 @@ namespace VehicleRaidFramework
                 }
             }
 
-            if (vehicle.ignition != null) vehicle.ignition.Drafted = true;
+            Patch_VehicleNPCOnOff.UpdateVehiclePower(vehicle);
 
             var leaderManager = map.GetComponent<VRF_LeaderManager>();
             if (leaderManager != null)

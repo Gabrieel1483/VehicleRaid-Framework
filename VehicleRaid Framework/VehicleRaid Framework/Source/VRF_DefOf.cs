@@ -9,7 +9,7 @@ namespace VehicleRaidFramework
         public static DutyDef VRF_VehicleSearchAndDestroy;
         public static DutyDef VRF_InfantryAssault;
         public static DutyDef VRF_InfantryExit;
-
+        public static DutyDef VRF_VehicleExitMap;
+        public static DutyDef VRF_VehicleDefendBase;
     }
 }
-

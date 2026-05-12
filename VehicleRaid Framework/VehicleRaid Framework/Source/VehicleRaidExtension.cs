@@ -35,7 +35,7 @@ namespace VehicleRaidFramework
         public List<PawnKindDef> forcedPawns = new List<PawnKindDef>();
 
         public FactionDef factionDef;
-
+        public List<FactionDef> factionDefs = new List<FactionDef>();
         public List<CargoItemOption> cargoItems = new List<CargoItemOption>();
 
         public string letterLabel = "VRF_LetterLabel_VehicleRaid";

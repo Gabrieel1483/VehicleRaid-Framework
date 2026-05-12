@@ -65,6 +65,11 @@ namespace VehicleRaidFramework
 
         private Faction ResolveFaction(IncidentParms parms, VehicleRaidExtension ext)
         {
+            if (!ext.factionDefs.NullOrEmpty())
+            {
+                FactionDef chosen = ext.factionDefs.RandomElement();
+                return Find.FactionManager.FirstFactionOfDef(chosen);
+            }
             if (ext.factionDef != null) return Find.FactionManager.FirstFactionOfDef(ext.factionDef);
             if (parms.faction != null) return parms.faction;
             return Find.FactionManager.RandomEnemyFaction(allowHidden: false, allowDefeated: false, allowNonHumanlike: false);

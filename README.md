@@ -9,3 +9,5 @@ And that's it! By following these steps and the notes I've provided, you'll be a
 And if you want to add a raid strategy, go to Defs\RaidStrategyDefs, fill in the basic raid strategy settings, and in the <modExtensions> section, it's the same as for the incident, so you can use the same notes I left in the IncidentDefs.
 
 And that's it, you have a raid strategy.
+
+To add vehicles as defense to settlements, first go to Test VehicleRaid\Defs\SettlementVehicles. I already left a note in the XML file; it's basically the same as the incident file. Then go to Test VehicleRaid\Patches, use the example file, and you're done. It's not very difficult; just change the faction's "def".

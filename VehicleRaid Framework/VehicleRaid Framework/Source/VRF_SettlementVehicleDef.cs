@@ -9,7 +9,7 @@ namespace VehicleRaidFramework
     {
         public FactionDef faction;
         public List<SettlementVehicleEntry> vehicles = new List<SettlementVehicleEntry>();
-        public float totalCombatPoints = 500f; // Budget for the settlement
+        public float totalCombatPoints = 500f; 
     }
 
     public class SettlementVehicleEntry
@@ -21,3 +21,5 @@ namespace VehicleRaidFramework
         public bool isMortar = false;
     }
 }
+
+

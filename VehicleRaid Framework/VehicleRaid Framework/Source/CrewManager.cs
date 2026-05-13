@@ -14,7 +14,8 @@ namespace VehicleRaidFramework
     {
         public static void ReassignCrew(VehiclePawn vehicle)
         {
-            if (vehicle.Faction == null || vehicle.Faction.IsPlayer) return;
+            if (vehicle == null || vehicle.Faction == null || vehicle.Faction.IsPlayer || !vehicle.Spawned) return;
+            if (vehicle.VehicleDef.type == VehicleType.Air) return;
 
             var handlers = vehicle.handlers;
             if (handlers == null || handlers.Count == 0) return;
@@ -87,9 +88,11 @@ namespace VehicleRaidFramework
 
         public static void CheckRetreat(VehiclePawn vehicle)
         {
-            if (vehicle.Faction == null || vehicle.Faction.IsPlayer) return;
+            if (vehicle == null || vehicle.Faction == null || vehicle.Faction.IsPlayer || !vehicle.Spawned) return;
+            if (vehicle.VehicleDef.type == VehicleType.Air) return;
+            if (vehicle.mindState?.duty?.def == null) return;
 
-            if (vehicle.mindState.duty?.def.defName == "VRF_VehicleExitMap" || vehicle.mindState.duty?.def == DutyDefOf.ExitMapBest) return;
+            if (vehicle.mindState.duty.def.defName == "VRF_VehicleExitMap" || vehicle.mindState.duty.def == DutyDefOf.ExitMapBest) return;
 
             int totalConscious = vehicle.AllPawnsAboard.Count(p => !p.Dead && !p.Downed);
             if (totalConscious == 1 && HasOperationalDriver(vehicle))
@@ -191,6 +194,7 @@ namespace VehicleRaidFramework
         {
 
             if (!vehicle.CanMove) return false;
+            if (!vehicle.HasEnoughOperators) return false;
 
             var fuelComp = vehicle.GetComp<CompFueledTravel>();
             if (fuelComp != null && fuelComp.Fuel <= 0 && !HasFuelInInventory(vehicle)) return false;
@@ -347,4 +351,6 @@ namespace VehicleRaidFramework
         }
     }
 }
+
+
 

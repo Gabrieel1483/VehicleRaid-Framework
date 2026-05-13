@@ -11,9 +11,9 @@ using SmashTools;
 
 namespace VehicleRaidFramework
 {
-    // =============================================
-    // LORD JOB: Main Raid Logic
-    // =============================================
+    
+    
+    
     public class LordJob_VehicleRaid : LordJob
     {
         private Faction assaulterFaction;
@@ -77,9 +77,9 @@ namespace VehicleRaidFramework
         }
     }
 
-    // =============================================
-    // LORD TOILS: Behavior States
-    // =============================================
+    
+    
+    
     public class LordToil_VehicleSearchAndDestroy : LordToil
     {
         public override bool ForceHighStoryDanger => true;
@@ -223,9 +223,9 @@ namespace VehicleRaidFramework
         }
     }
 
-    // =============================================
-    // JOB GIVERS: Decision Making
-    // =============================================
+    
+    
+    
     public class VRF_JobGiver_DynamicAssault : ThinkNode_JobGiver
     {
         private const int WallBaseCost = 20;
@@ -565,9 +565,9 @@ namespace VehicleRaidFramework
         }
     }
 
-    // =============================================
-    // JOB DRIVERS: Action Execution
-    // =============================================
+    
+    
+    
     public class JobDriver_VehicleExitMap : JobDriver
     {
         public override bool TryMakePreToilReservations(bool errorOnFailed) 

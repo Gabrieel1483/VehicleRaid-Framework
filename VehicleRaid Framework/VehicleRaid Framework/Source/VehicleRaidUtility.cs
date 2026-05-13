@@ -160,6 +160,25 @@ namespace VehicleRaidFramework
             return spawnedPawns;
         }
 
+        public static IntVec3 FixDestination(VehiclePawn vehicle, IntVec3 dest)
+        {
+            if (vehicle == null || !dest.IsValid) return dest;
+            if (vehicle.DrivableRectOnCell(dest, Ext_Vehicles.DestinationHitboxReq.AnyRotation)) return dest;
+
+            
+            for (int i = 1; i <= 8; i++)
+            {
+                foreach (IntVec3 cell in GenRadial.RadialCellsAround(dest, i, true))
+                {
+                    if (cell.InBounds(vehicle.Map) && vehicle.DrivableRectOnCell(cell, Ext_Vehicles.DestinationHitboxReq.AnyRotation))
+                    {
+                        return cell;
+                    }
+                }
+            }
+            return dest;
+        }
+
         private static VehiclePawn GenerateVehicleWithCrew(VehicleRaidOption option, Faction faction, Map map, VehicleRaidExtension ext, List<Pawn> allPawns)
         {
             VehicleDef vehicleDef = option.kindDef.race as VehicleDef;
@@ -243,4 +262,6 @@ namespace VehicleRaidFramework
     }
 
 }
+
+
 

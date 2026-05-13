@@ -30,10 +30,7 @@
 		<modExtensions>
 			<li Class="VehicleRaidFramework.VehicleRaidExtension">
 				
-				<factionDefs>  <!-- defs of the factions that can do the raid -->
-					<li>Empire</li>
-					<li>OutlanderCivil</li>
-				</factionDefs>
+				<factionDef>Empire</factionDef> <!-- def of the faction that will do the raid -->
 
 				
 				<vehicleOptions>

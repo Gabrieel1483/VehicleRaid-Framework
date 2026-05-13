@@ -27,8 +27,8 @@ namespace VehicleRaidFramework
 
                 if (path == null || !path.Found)
                 {
+                    
                     __instance.PatherFailed();
-
                 }
                 else
                 {
@@ -49,9 +49,6 @@ namespace VehicleRaidFramework
             return true;
         }
     }
-
-
-
     [HarmonyPatch(typeof(Vehicles.VehiclePathFinder), "FindPath", new Type[] { typeof(IntVec3), typeof(LocalTargetInfo), typeof(Vehicles.VehiclePawn), typeof(CancellationToken), typeof(PathEndMode) })]
     public static class Patch_VehiclePathFinder_SuppressMessage
     {
@@ -70,5 +67,21 @@ namespace VehicleRaidFramework
             return true;
         }
     }
+
+    [HarmonyPatch(typeof(VehiclePawn), nameof(VehiclePawn.CanDraft))]
+    public static class Patch_VehiclePawn_CanDraft_SuppressMessage
+    {
+        public static bool Prefix(VehiclePawn __instance, ref AcceptanceReport __result)
+        {
+            if (__instance.Faction != null && !__instance.Faction.IsPlayer)
+            {
+                __result = true;
+                return false;
+            }
+            return true;
+        }
+    }
 }
+
+
 

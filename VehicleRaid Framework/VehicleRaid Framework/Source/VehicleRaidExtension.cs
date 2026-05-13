@@ -8,6 +8,7 @@ namespace VehicleRaidFramework
     {
         public ThingDef thingDef;
         public IntRange count = new IntRange(1, 1);
+        public bool tradeable = true; 
     }
 
     public class VehicleRaidOption
@@ -50,4 +51,6 @@ namespace VehicleRaidFramework
         }
     }
 }
+
+
 

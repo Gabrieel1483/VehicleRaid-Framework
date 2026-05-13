@@ -15,7 +15,16 @@ namespace VehicleRaidFramework
     {
         static void Postfix(VehiclePawn __instance)
         {
-            if (__instance == null || !__instance.Spawned || __instance.Destroyed || __instance.Map == null || !__instance.IsHashIntervalTick(250)) return;
+            if (__instance == null || !__instance.Spawned || __instance.Destroyed || __instance.Map == null) return;
+
+            // Engine management for NPC vehicles (more frequent check)
+            if (__instance.Faction != null && !__instance.Faction.IsPlayer && __instance.IsHashIntervalTick(30))
+            {
+                Patch_VehicleNPCOnOff.UpdateVehiclePower(__instance);
+            }
+
+            if (!__instance.IsHashIntervalTick(500)) return;
+            if (__instance.VehicleDef.type == VehicleType.Air) return;
 
             if (__instance.Faction == null || __instance.Faction.IsPlayer) return;
 
@@ -26,7 +35,7 @@ namespace VehicleRaidFramework
             Lord lord = __instance.GetLord();
             if (lord != null)
             {
-                if (lord.LordJob is LordJob_VehicleRaid && __instance.IsHashIntervalTick(1250))
+                if ((lord.LordJob is LordJob_VehicleRaid || lord.LordJob is LordJob_VehicleTrade) && __instance.IsHashIntervalTick(1250))
                 {
                     FeedCrewFromInventory(__instance);
                     RefuelFromInventory(__instance);
@@ -180,3 +189,5 @@ namespace VehicleRaidFramework
         }
     }
 }
+
+

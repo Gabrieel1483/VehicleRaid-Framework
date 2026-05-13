@@ -13,3 +13,5 @@ namespace VehicleRaidFramework
         public static DutyDef VRF_VehicleDefendBase;
     }
 }
+
+

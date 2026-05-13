@@ -65,5 +65,37 @@
     </lifeStages>
   </PawnKindDef>
 
+  <PawnKindDef>
+    <defName>VVE_Cherokee_NPC_Kind</defName>
+    <label>Cherokee</label>
+    <race>VVE_Cherokee_NPC</race> 
+    <combatPower>2000</combatPower>
+    <lifeStages>
+      <li>
+        <bodyGraphicData>
+          <texPath>Things/Vehicles/Tier3/Tier3_CargoHelicopter/Tier3_CargoHelicopter</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>(4,4)</drawSize>
+        </bodyGraphicData>
+      </li>
+    </lifeStages>
+  </PawnKindDef>
+
+  <PawnKindDef>
+    <defName>VVE_BigRig_NPC_Kind</defName>
+    <label>Cherokee</label>
+    <race>VVE_BigRig_NPC</race> 
+    <combatPower>2000</combatPower>
+    <lifeStages>
+      <li>
+        <bodyGraphicData>
+          <texPath>Things/Vehicles/Tier3/Tier3_CargoHelicopter/Tier3_CargoHelicopter</texPath>
+          <graphicClass>Graphic_Multi</graphicClass>
+          <drawSize>(4,4)</drawSize>
+        </bodyGraphicData>
+      </li>
+    </lifeStages>
+  </PawnKindDef>
+
 </Defs>
 

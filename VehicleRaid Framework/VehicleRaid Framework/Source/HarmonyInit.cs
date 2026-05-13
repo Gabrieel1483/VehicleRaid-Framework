@@ -10,8 +10,9 @@ namespace VehicleRaidFramework
         {
             var harmony = new Harmony("VRF.VehicleRaidFramework");
             harmony.PatchAll();
-            Log.Message("[VehicleRaid Framework] Harmony patches applied successfully.");
-        }
+}
     }
 }
+
+
 

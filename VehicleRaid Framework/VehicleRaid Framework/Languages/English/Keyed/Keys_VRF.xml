@@ -8,5 +8,9 @@
     <MessageVRF_VehicleAbandoned>The crew has abandoned {0} because it is no longer operational.</MessageVRF_VehicleAbandoned>
     <MessageVRF_VehicleRetreating>{0} is retreating because only the driver remains.</MessageVRF_VehicleRetreating>
     <MessageVRF_VehicleRetreatingNoAmmo>{0} is retreating because it has run out of ammunition.</MessageVRF_VehicleRetreatingNoAmmo>
+    <VRF_RequestArmoredTrader>Request armored trade convoy (cost: {0} goodwill)</VRF_RequestArmoredTrader>
+    <VRF_RequestAerialTrader>Request aerial trade (cost: {0} goodwill)</VRF_RequestAerialTrader>
+    <VRF_ChooseTraderType>Choose trader type:</VRF_ChooseTraderType>
+    <VRF_TraderCargoWeight>Trader cargo weight: {0} / {1} kg</VRF_TraderCargoWeight>
+    <VRF_TraderOverweight>The trader cannot carry this much weight in their vehicles.</VRF_TraderOverweight>
 </LanguageData>
-

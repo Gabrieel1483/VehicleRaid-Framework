@@ -28,8 +28,7 @@ namespace VehicleRaidFramework
             }
             catch (Exception ex)
             {
-                Log.Warning("[VRF] Could not apply VVE handbrake patches (VVE may not be installed): " + ex.Message);
-            }
+}
         }
 
         private static void ApplyPatches()
@@ -49,8 +48,7 @@ namespace VehicleRaidFramework
 
             if (compType == null)
             {
-                Log.Message("[VRF] VVE CompVehicleMovementController not found. Handbrake patch skipped.");
-                return;
+return;
             }
 
             MethodInfo slowdownMethod = compType.GetMethod("Slowdown",
@@ -64,8 +62,7 @@ namespace VehicleRaidFramework
             }
             else
             {
-                Log.Warning("[VRF] VVE Slowdown method not found.");
-            }
+}
         }
 
 
@@ -173,4 +170,6 @@ namespace VehicleRaidFramework
         }
     }
 }
+
+
 

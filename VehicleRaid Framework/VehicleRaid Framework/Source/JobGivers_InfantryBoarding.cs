@@ -15,6 +15,9 @@ namespace VehicleRaidFramework
         {
             if (pawn.Faction == null || pawn.Map == null || pawn.Downed || pawn.Dead) return null;
             if (pawn.CurJob != null && pawn.CurJob.def.defName == "Board") return null;
+            
+            
+            if (pawn.mindState?.wantsToTradeWithColony == true) return null;
 
             var vehicles = pawn.Map.mapPawns.AllPawnsSpawned
                 .OfType<VehiclePawn>()
@@ -101,3 +104,5 @@ namespace VehicleRaidFramework
         }
     }
 }
+
+

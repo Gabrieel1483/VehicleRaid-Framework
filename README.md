@@ -28,3 +28,5 @@ Then, go to Patches. traderKind defines the items to be traded; you can create t
     <escortVehicles> are the guards and do not carry anything.
 
 Now for aerial vehicles: only use helicopter-type vehicles, as I am unsure what happens with plane-type vehicles. We will only use one incident. Go to Defs\IncidentTradeVehicleDefs VRF_Incidents_Helicopter. It is the same process: change defName, label, and baseChance. The new parts are simple: vehicleKind is the vehicle, factionDef is the faction, and traderKind is the list of items to trade (TraderKindDef).
+
+Once a merchant vehicle incident has been created, it will appear in the communications console to be requested or it will generate randomly; it will only appear once the colony becomes an ally with the faction you have set.

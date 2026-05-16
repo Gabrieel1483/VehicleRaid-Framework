@@ -10,14 +10,14 @@ namespace VehicleRaidFramework
 {
     public class IncidentWorker_VehicleTrader : IncidentWorker
     {
-        protected override bool CanFireNowSub(IncidentParms parms)
+        public override bool CanFireNowSub(IncidentParms parms)
         {
             if (!base.CanFireNowSub(parms)) return false;
             Map map = (Map)parms.target;
             return TryFindTraderFaction(out Faction faction, map) && !NeutralGroupIncidentUtility.AnyBlockingHostileLord(map, faction);
         }
 
-        protected override bool TryExecuteWorker(IncidentParms parms)
+        public override bool TryExecuteWorker(IncidentParms parms)
         {
             Map map = (Map)parms.target;
             Faction faction = parms.faction;
@@ -193,14 +193,11 @@ string label = "LetterLabelTraderCaravanArrival".Translate(faction.Name, traderK
             if (opt == null || opt.kindDef == null) return null;
             VehiclePawn v = VehicleSpawner.GenerateVehicle(opt.kindDef.race as VehicleDef, faction);
             if (v == null) return null;
-            
-            VehicleRole role = v.VehicleDef.properties.roles.Find(x => x.HandlingTypes != HandlingType.None);
-            if (role != null)
-            {
-                v.TryAddPawn(trader, v.GetHandler(role.key));
-            }
-            
-            
+
+            VehicleRole firstRole = v.VehicleDef.properties.roles.Find(x => x.HandlingTypes != HandlingType.None);
+            if (firstRole != null)
+                v.TryAddPawn(trader, v.GetHandler(firstRole.key));
+
             foreach (var cargo in opt.cargoItems)
             {
                 int remainingAmount = cargo.count.RandomInRange;
@@ -209,19 +206,12 @@ string label = "LetterLabelTraderCaravanArrival".Translate(faction.Name, traderK
                     Thing t = ThingMaker.MakeThing(cargo.thingDef);
                     t.stackCount = UnityEngine.Mathf.Min(remainingAmount, t.def.stackLimit);
                     remainingAmount -= t.stackCount;
-                    
-                    if (!cargo.tradeable)
-                    {
-                        v.inventory.TryAddItemNotForSale(t);
-                    }
-                    else
-                    {
-                        v.inventory.innerContainer.TryAdd(t);
-                    }
+                    if (!cargo.tradeable) v.inventory.TryAddItemNotForSale(t);
+                    else v.inventory.innerContainer.TryAdd(t);
                 }
             }
-            
-            FillRemainingSlots(v, faction, map, allPawns);
+
+            FillRemainingSlots(v, faction, map, allPawns, traderOccupiesFirstRole: true);
             return v;
         }
 
@@ -238,37 +228,30 @@ string label = "LetterLabelTraderCaravanArrival".Translate(faction.Name, traderK
                     Thing t = ThingMaker.MakeThing(cargo.thingDef);
                     t.stackCount = UnityEngine.Mathf.Min(remainingAmount, t.def.stackLimit);
                     remainingAmount -= t.stackCount;
-                    
-                    if (!cargo.tradeable)
-                    {
-                        v.inventory.TryAddItemNotForSale(t);
-                    }
-                    else
-                    {
-                        v.inventory.innerContainer.TryAdd(t);
-                    }
+                    if (!cargo.tradeable) v.inventory.TryAddItemNotForSale(t);
+                    else v.inventory.innerContainer.TryAdd(t);
                 }
             }
 
-            FillRemainingSlots(v, faction, map, allPawns);
+            FillRemainingSlots(v, faction, map, allPawns, traderOccupiesFirstRole: false);
             return v;
         }
 
-        private void FillRemainingSlots(VehiclePawn v, Faction faction, Map map, List<Pawn> allPawns)
+        private void FillRemainingSlots(VehiclePawn v, Faction faction, Map map, List<Pawn> allPawns, bool traderOccupiesFirstRole)
         {
             PawnKindDef kind = faction.def.basicMemberKind ?? faction.def.pawnGroupMakers.SelectMany(x => x.options).Select(x => x.kind).FirstOrDefault(x => x.RaceProps.Humanlike);
-            
+            bool firstRole = true;
             foreach (var role in v.VehicleDef.properties.roles)
             {
-                int needed = role.Slots - v.GetHandler(role.key).thingOwner.Count;
+                int start = (traderOccupiesFirstRole && firstRole) ? 1 : 0;
+                int needed = role.Slots - v.GetHandler(role.key).thingOwner.Count - start;
                 for (int i = 0; i < needed; i++)
                 {
                     Pawn crew = PawnGenerator.GeneratePawn(new PawnGenerationRequest(kind, faction, PawnGenerationContext.NonPlayer, map.Tile));
                     if (v.TryAddPawn(crew, v.GetHandler(role.key)))
-                    {
                         allPawns.Add(crew);
-                    }
                 }
+                firstRole = false;
             }
         }
 

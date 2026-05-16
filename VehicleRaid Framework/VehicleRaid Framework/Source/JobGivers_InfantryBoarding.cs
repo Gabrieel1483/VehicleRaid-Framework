@@ -11,7 +11,7 @@ namespace VehicleRaidFramework
     {
         private float searchRadius = 80f;
 
-        protected override Job TryGiveJob(Pawn pawn)
+        public override Job TryGiveJob(Pawn pawn)
         {
             if (pawn.Faction == null || pawn.Map == null || pawn.Downed || pawn.Dead) return null;
             if (pawn.CurJob != null && pawn.CurJob.def.defName == "Board") return null;
@@ -70,7 +70,7 @@ namespace VehicleRaidFramework
         private float followRadius = 100f;
         private float minDistance = 10f;
 
-        protected override Job TryGiveJob(Pawn pawn)
+        public override Job TryGiveJob(Pawn pawn)
         {
             if (pawn.Faction == null || pawn.Map == null || pawn.Downed || pawn.Dead) return null;
 

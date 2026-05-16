@@ -94,6 +94,9 @@ namespace VehicleRaidFramework
 
             if (vehicle.mindState.duty.def.defName == "VRF_VehicleExitMap" || vehicle.mindState.duty.def == DutyDefOf.ExitMapBest) return;
 
+            Lord lord = vehicle.GetLord();
+            if (lord?.LordJob is LordJob_VehicleTrade || lord?.LordJob is LordJob_HelicopterTrade) return;
+
             int totalConscious = vehicle.AllPawnsAboard.Count(p => !p.Dead && !p.Downed);
             if (totalConscious == 1 && HasOperationalDriver(vehicle))
             {
@@ -228,8 +231,10 @@ namespace VehicleRaidFramework
 
         public static void CheckAbandonment(VehiclePawn vehicle)
         {
-
             if (!vehicle.AllPawnsAboard.Any()) return;
+
+            Lord lord = vehicle.GetLord();
+            if (lord?.LordJob is LordJob_VehicleTrade || lord?.LordJob is LordJob_HelicopterTrade) return;
 
             if (!CanMove(vehicle))
             {
@@ -333,6 +338,7 @@ namespace VehicleRaidFramework
         {
             if (__instance.ParentHolder is VehicleRoleHandler handler)
             {
+                if (handler.vehicle?.VehicleDef?.type == VehicleType.Air) return;
                 CrewManager.ReassignCrew(handler.vehicle);
             }
         }
@@ -346,6 +352,7 @@ namespace VehicleRaidFramework
             Pawn pawn = Traverse.Create(__instance).Field("pawn").GetValue<Pawn>();
             if (pawn?.ParentHolder is VehicleRoleHandler handler)
             {
+                if (handler.vehicle?.VehicleDef?.type == VehicleType.Air) return;
                 CrewManager.ReassignCrew(handler.vehicle);
             }
         }

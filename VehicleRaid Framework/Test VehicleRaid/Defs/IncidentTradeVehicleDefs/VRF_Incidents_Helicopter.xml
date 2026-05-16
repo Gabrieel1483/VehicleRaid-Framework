@@ -14,6 +14,30 @@
         <vehicleKind>VVE_Cherokee_NPC_Kind</vehicleKind>
         <factionDef>Empire</factionDef>
         <traderKind>Empire_Caravan_TraderGeneral</traderKind>
+        <!-- Optional: define specific pawn kinds per role.
+             The trader always occupies the first driver slot automatically.
+             If left empty the framework generates crew automatically.
+             Count is capped to the vehicle's slot limit for each role. -->
+        <!--
+        <driverCrew>
+          <li>
+            <pawnDef>Empire_Fighter_Cataphract</pawnDef>
+            <count>1</count>
+          </li>
+        </driverCrew>
+        <gunnerCrew>
+          <li>
+            <pawnDef>Empire_Fighter_Janissary</pawnDef>
+            <count>2</count>
+          </li>
+        </gunnerCrew>
+        <passengerCrew>
+          <li>
+            <pawnDef>Empire_Fighter_Janissary</pawnDef>
+            <count>3</count>
+          </li>
+        </passengerCrew>
+        -->
       </li>
     </modExtensions>
   </IncidentDef>

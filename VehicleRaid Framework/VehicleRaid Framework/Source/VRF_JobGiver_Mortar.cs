@@ -13,7 +13,7 @@ namespace VehicleRaidFramework
         private const int ManeuverCandidateCount = 8;
         private const float ManeuverDistance = 2.5f;
 
-        protected override Job TryGiveJob(Pawn pawn)
+        public override Job TryGiveJob(Pawn pawn)
         {
             if (!(pawn is VehiclePawn vehicle) || !vehicle.Spawned || vehicle.Map == null) return null;
 

@@ -197,18 +197,12 @@ namespace VehicleRaidFramework
             {
                 foreach (VehicleRole role in vehicleDef.properties.roles)
                 {
-                    if (role.HandlingTypes != HandlingType.None)
-                    {
-                        for (int i = 0; i < role.Slots; i++)
-                        {
-                            Pawn crew = GenerateCrewPawn(faction, map, option.kindDef);
-                            if (crew != null)
-                            {
-                                BoardPawnInRole(vehicle, crew, role.key);
-                                allPawns.Add(crew);
-                            }
-                        }
-                    }
+                    if (role.Slots <= 0) continue;
+
+                    List<VehicleCrewSlot> customSlots = VehicleCrewUtility.GetCrewSlotsForRole(role,
+                        option.driverCrew, option.gunnerCrew, option.passengerCrew);
+
+                    VehicleCrewUtility.FillRole(vehicle, role, customSlots, faction, map, allPawns);
                 }
             }
 
@@ -246,19 +240,6 @@ namespace VehicleRaidFramework
             item.stackCount = count;
             vehicle.inventory.innerContainer.TryAdd(item);
         }
-
-        private static Pawn GenerateCrewPawn(Faction faction, Map map, PawnKindDef vehicleKind)
-        {
-            PawnKindDef kind = faction.RandomPawnKind() ?? PawnKindDefOf.AncientSoldier;
-            return PawnGenerator.GeneratePawn(new PawnGenerationRequest(kind, faction, PawnGenerationContext.NonPlayer, map.Tile, forceGenerateNewPawn: true, mustBeCapableOfViolence: true));
-        }
-
-        private static void BoardPawnInRole(VehiclePawn vehicle, Pawn pawn, string roleKey)
-        {
-            VehicleRoleHandler handler = vehicle.GetHandler(roleKey);
-            if (handler != null) vehicle.TryAddPawn(pawn, handler);
-        }
-
     }
 
 }

@@ -8,7 +8,7 @@ namespace VehicleRaidFramework
 {
     public class JobGiver_VehicleParking : ThinkNode_JobGiver
     {
-        protected override Job TryGiveJob(Pawn pawn)
+        public override Job TryGiveJob(Pawn pawn)
         {
             if (!(pawn is VehiclePawn vehicle)) return null;
             if (!vehicle.Spawned || vehicle.Map == null) return null;

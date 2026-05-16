@@ -11,14 +11,14 @@ namespace VehicleRaidFramework
 {
     public class IncidentWorker_HelicopterTrader : IncidentWorker
     {
-        protected override bool CanFireNowSub(IncidentParms parms)
+        public override bool CanFireNowSub(IncidentParms parms)
         {
             if (!base.CanFireNowSub(parms)) return false;
             Map map = (Map)parms.target;
             return TryFindTraderFaction(out Faction faction, map);
         }
 
-        protected override bool TryExecuteWorker(IncidentParms parms)
+        public override bool TryExecuteWorker(IncidentParms parms)
         {
             Map map = (Map)parms.target;
             Faction faction = parms.faction;
@@ -68,7 +68,7 @@ namespace VehicleRaidFramework
                 heli.GetHandler(heli.VehicleDef.properties.roles.First().key).thingOwner.TryAdd(trader);
             }
 
-            FillCrew(heli, faction, map);
+            FillCrew(heli, mapper?.principalVehicle, faction, map);
 
             List<Thing> stock = ThingSetMakerDefOf.TraderStock.root.Generate(new ThingSetMakerParams { traderDef = traderKind, tile = map.Tile, makingFaction = faction });
             foreach (Thing t in stock) heli.inventory.innerContainer.TryAdd(t);
@@ -113,7 +113,7 @@ namespace VehicleRaidFramework
 
         private void FillCrew(VehiclePawn v, Faction faction, Map map)
         {
-            PawnKindDef kind = faction.def.basicMemberKind ?? faction.def.pawnGroupMakers.SelectMany(x => x.options).Select(x => x.kind).FirstOrDefault(x => x.RaceProps.Humanlike);
+            PawnKindDef kind = faction.def.basicMemberKind ?? faction.def.pawnGroupMakers.SelectMany(x => x.options).Select(x => x.kind).FirstOrDefault(x => x.RaceProps.Humanlike) ?? PawnKindDefOf.AncientSoldier;
             foreach (var role in v.VehicleDef.properties.roles)
             {
                 int needed = role.Slots - v.GetHandler(role.key).thingOwner.Count;

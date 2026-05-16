@@ -26,7 +26,7 @@ namespace VehicleRaidFramework
             return base.CanUseWith(parms, groupKind);
         }
 
-        protected override LordJob MakeLordJob(IncidentParms parms, Map map, List<Pawn> pawns, int raidSeed)
+        public override LordJob MakeLordJob(IncidentParms parms, Map map, List<Pawn> pawns, int raidSeed)
         {
 
             return new LordJob_VehicleRaid(parms.faction);

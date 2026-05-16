@@ -85,17 +85,14 @@ namespace VehicleRaidFramework
                 if (vehicle == null) return;
 
                 GenSpawn.Spawn(vehicle, cell, map);
-                
+
+                PawnKindDef crewKind = faction.def.basicMemberKind ?? faction.def.pawnGroupMakers.SelectMany(x => x.options).Select(x => x.kind).FirstOrDefault(x => x.RaceProps.Humanlike) ?? PawnKindDefOf.AncientSoldier;
                 foreach (var role in vehicleDef.properties.roles)
                 {
-                    if (role.HandlingTypes != HandlingType.None)
+                    for (int i = 0; i < role.Slots; i++)
                     {
-                        for (int i = 0; i < role.Slots; i++)
-                        {
-                            PawnKindDef kind = faction.RandomPawnKind() ?? PawnKindDefOf.AncientSoldier;
-                            Pawn crew = PawnGenerator.GeneratePawn(new PawnGenerationRequest(kind, faction, PawnGenerationContext.NonPlayer, map.Tile));
-                            vehicle.TryAddPawn(crew, vehicle.GetHandler(role.key));
-                        }
+                        Pawn crew = PawnGenerator.GeneratePawn(new PawnGenerationRequest(crewKind, faction, PawnGenerationContext.NonPlayer, map.Tile));
+                        vehicle.TryAddPawn(crew, vehicle.GetHandler(role.key));
                     }
                 }
 

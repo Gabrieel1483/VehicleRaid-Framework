@@ -231,7 +231,7 @@ namespace VehicleRaidFramework
         private const int WallBaseCost = 20;
         private const float WallHpCost = 0.015f;
 
-        protected override Job TryGiveJob(Pawn pawn)
+        public override Job TryGiveJob(Pawn pawn)
         {
             if (!(pawn is VehiclePawn vehicle) || !vehicle.Spawned || vehicle.Map == null) return null;
 
@@ -528,7 +528,7 @@ namespace VehicleRaidFramework
 
     public class VRF_JobGiver_VehicleExitMap : ThinkNode_JobGiver
     {
-        protected override Job TryGiveJob(Pawn pawn)
+        public override Job TryGiveJob(Pawn pawn)
         {
             if (!(pawn is VehiclePawn vehicle) || !vehicle.Spawned || vehicle.Map == null) return null;
 
@@ -576,7 +576,7 @@ namespace VehicleRaidFramework
             return true;
         }
 
-        protected override IEnumerable<Toil> MakeNewToils()
+        public override IEnumerable<Toil> MakeNewToils()
         {
             Toil gotoToil = Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.OnCell);
             gotoToil.tickAction = () => { if (pawn is VehiclePawn v && v.Position.DistanceToSquared(TargetA.Cell) <= 4) PathingHelper.ExitMapForVehicle(v, job); };

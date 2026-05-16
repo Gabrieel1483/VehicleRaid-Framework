@@ -11,6 +11,12 @@ namespace VehicleRaidFramework
         public bool tradeable = true; 
     }
 
+    public class VehicleCrewSlot
+    {
+        public PawnKindDef pawnDef;
+        public int count = 1;
+    }
+
     public class VehicleRaidOption
     {
         public PawnKindDef kindDef;
@@ -20,6 +26,10 @@ namespace VehicleRaidFramework
         public bool pawnFollowVehicle = false;
         public bool isMortar = false;
         public List<CargoItemOption> cargoItems = new List<CargoItemOption>();
+
+        public List<VehicleCrewSlot> driverCrew     = new List<VehicleCrewSlot>();
+        public List<VehicleCrewSlot> gunnerCrew     = new List<VehicleCrewSlot>();
+        public List<VehicleCrewSlot> passengerCrew  = new List<VehicleCrewSlot>();
     }
 
     public class VehicleRaidExtension : DefModExtension

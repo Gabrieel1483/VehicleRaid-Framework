@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using Unity.Jobs;
 using HarmonyLib;
 using RimWorld;
 using Verse;
@@ -15,29 +13,13 @@ namespace VehicleRaidFramework
         [HarmonyPostfix]
         public static void Postfix(Pawn p, ref TraderCaravanRole __result)
         {
-            if (p is VehiclePawn v)
-            {
-                Lord lord = p.GetLord();
-                if (lord != null)
-                {
-                    if (lord.LordJob is LordJob_VehicleTrade tradeJob)
-                    {
-                        __result = tradeJob.tradeableVehicles.Contains(v) ? TraderCaravanRole.Carrier : TraderCaravanRole.Guard;
-                    }
-                    else if (lord.LordJob is LordJob_HelicopterTrade heliJob)
-                    {
-                        __result = heliJob.tradeVehicles.Contains(v) ? TraderCaravanRole.Carrier : TraderCaravanRole.Guard;
-                    }
-                    else
-                    {
-                        __result = TraderCaravanRole.Carrier;
-                    }
-                }
-                else
-                {
-                    __result = TraderCaravanRole.Carrier;
-                }
-            }
+            if (!(p is VehiclePawn v)) return;
+
+            Lord lord = p.GetLord();
+            if (lord?.LordJob is LordJob_VehicleTrade tradeJob)
+                __result = tradeJob.tradeableVehicles.Contains(v) ? TraderCaravanRole.Carrier : TraderCaravanRole.Guard;
+            else if (lord?.LordJob is LordJob_HelicopterTrade heliJob)
+                __result = heliJob.tradeVehicles.Contains(v) ? TraderCaravanRole.Carrier : TraderCaravanRole.Guard;
         }
     }
 

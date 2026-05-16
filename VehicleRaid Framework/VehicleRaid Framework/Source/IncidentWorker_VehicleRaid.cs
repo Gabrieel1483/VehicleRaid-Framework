@@ -14,7 +14,7 @@ namespace VehicleRaidFramework
 
     public class IncidentWorker_VehicleRaid : IncidentWorker
     {
-        protected override bool CanFireNowSub(IncidentParms parms)
+        public override bool CanFireNowSub(IncidentParms parms)
         {
             VehicleRaidExtension ext = this.def.GetModExtension<VehicleRaidExtension>();
             if (ext == null || ext.vehicleOptions.NullOrEmpty()) return false;
@@ -28,7 +28,7 @@ namespace VehicleRaidFramework
             return true;
         }
 
-        protected override bool TryExecuteWorker(IncidentParms parms)
+        public override bool TryExecuteWorker(IncidentParms parms)
         {
             Map map = (Map)parms.target;
             if (map == null) return false;

@@ -17,14 +17,13 @@ namespace VehicleRaidFramework
         {
             if (__instance == null || !__instance.Spawned || __instance.Destroyed || __instance.Map == null) return;
 
-            // Engine management for NPC vehicles (more frequent check)
             if (__instance.Faction != null && !__instance.Faction.IsPlayer && __instance.IsHashIntervalTick(30))
             {
                 Patch_VehicleNPCOnOff.UpdateVehiclePower(__instance);
             }
 
-            if (!__instance.IsHashIntervalTick(500)) return;
-            if (__instance.VehicleDef.type == VehicleType.Air) return;
+            if (!__instance.IsHashIntervalTick(60)) return;
+            if (__instance.VehicleDef.type == VehicleType.Air && __instance.GetComp<VehicleRaid.CompVehicleHover>() == null) return;
 
             if (__instance.Faction == null || __instance.Faction.IsPlayer) return;
 

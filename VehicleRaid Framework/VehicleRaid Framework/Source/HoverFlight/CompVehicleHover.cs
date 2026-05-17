@@ -1,9 +1,11 @@
+using System.Linq;
 using SmashTools;
 using System.Collections.Generic;
 using RimWorld;
 using UnityEngine;
 using Verse;
 using Vehicles;
+using VehicleRaidFramework;
 
 namespace VehicleRaid
 {
@@ -37,9 +39,14 @@ namespace VehicleRaid
         public bool isAttackingTarget = false;
         private int turretUpdateTicks = 0;
 
+        public Thing facingTargetNPC = null;
+        public bool isFacingTargetNPC = false;
+
         private int ticksWithoutPilot = 0;
+        private int ticksWithoutFuel = 0;
         private float crashStartAltitude = 0f;
         private const int CrashDelayTicks = 180;
+        private const int CrashFuelDelayTicks = 240;
         private const int CrashDurationTicks = 90;
 
         public CompProperties_VehicleHover Props => (CompProperties_VehicleHover)props;
@@ -80,12 +87,13 @@ namespace VehicleRaid
             Scribe_TargetInfo.Look(ref attackTarget, "attackTarget");
             Scribe_Values.Look(ref turretUpdateTicks, "turretUpdateTicks", 0);
             Scribe_Values.Look(ref ticksWithoutPilot, "ticksWithoutPilot", 0);
+            Scribe_Values.Look(ref ticksWithoutFuel, "ticksWithoutFuel", 0);
             Scribe_Values.Look(ref crashStartAltitude, "crashStartAltitude", 0f);
         }
 
         public override IEnumerable<Gizmo> CompGetGizmosExtra()
         {
-            if (this.Vehicle.Faction != Faction.OfPlayer) yield break;
+            if (this.Vehicle.Faction != Faction.OfPlayer && !DebugSettings.godMode) yield break;
             if (!this.Vehicle.Spawned || this.Vehicle.Map == null) yield break;
 
             if (takeoffCommand == null)
@@ -319,6 +327,19 @@ namespace VehicleRaid
             hasTarget = true;
         }
 
+        public void ActivateHoverNPC()
+        {
+            if (State != HoverState.Grounded) return;
+
+            ticksInState = Props.maxTicks;
+            State = HoverState.Hovering;
+            currentAltitude = Props.hoverBobAmount;
+            bobbingOffset = currentAltitude;
+            realPos = new Vector2(Vehicle.Position.x + 0.5f, Vehicle.Position.z + 0.5f);
+            targetPos = realPos;
+            UpdatePropellerSpeed();
+        }
+
         private void StartTakeoff()
         {
             if (State != HoverState.Grounded && State != HoverState.Landing) return;
@@ -381,6 +402,57 @@ namespace VehicleRaid
 
             if (!Vehicle.Spawned || Vehicle.Map == null) return;
 
+            if (State == HoverState.Grounded &&
+                Vehicle.Faction != null &&
+                !Vehicle.Faction.IsPlayer &&
+                Vehicle.IsHashIntervalTick(180))
+            {
+                if (Patch_VehicleNPCOnOff.ShouldVehicleBeOn(Vehicle))
+                    ActivateHoverNPC();
+            }
+
+            if (IsAirborne && State != HoverState.Crashing)
+            {
+                if (!Vehicle.HasEnoughOperators)
+                {
+                    ticksWithoutPilot++;
+                    if (ticksWithoutPilot % 30 == 0 && Vehicle.Spawned)
+                        FleckMaker.ThrowSmoke(new Vector3(realPos.x, 0f, realPos.y), Vehicle.Map, 1f);
+                    if (ticksWithoutPilot >= CrashDelayTicks)
+                    {
+                        StartCrashing();
+                        return;
+                    }
+                }
+                else
+                {
+                    ticksWithoutPilot = 0;
+                }
+
+                CompFueledTravel fuelComp = Vehicle.GetComp<CompFueledTravel>();
+                if (fuelComp != null && fuelComp.Fuel <= 0)
+                {
+                    ticksWithoutFuel++;
+                    
+                    if (ticksWithoutFuel == 1)
+                    {
+                        TryEmergencyRefuel();
+                    }
+
+                    if (ticksWithoutFuel % 30 == 0 && Vehicle.Spawned)
+                        FleckMaker.ThrowSmoke(new Vector3(realPos.x, 0f, realPos.y), Vehicle.Map, 1f);
+                    if (ticksWithoutFuel >= CrashFuelDelayTicks)
+                    {
+                        StartCrashing();
+                        return;
+                    }
+                }
+                else
+                {
+                    ticksWithoutFuel = 0;
+                }
+            }
+
             if (State == HoverState.TakingOff)
             {
                 ticksInState++;
@@ -418,19 +490,6 @@ namespace VehicleRaid
                 TickFacingTarget();
                 TickHoverMovement();
                 TickAttackTarget();
-
-                if (!Vehicle.HasEnoughOperators)
-                {
-                    ticksWithoutPilot++;
-                    if (ticksWithoutPilot % 30 == 0 && Vehicle.Spawned)
-                        FleckMaker.ThrowSmoke(new Vector3(realPos.x, 0f, realPos.y), Vehicle.Map, 1f);
-                    if (ticksWithoutPilot >= CrashDelayTicks)
-                        StartCrashing();
-                }
-                else
-                {
-                    ticksWithoutPilot = 0;
-                }
             }
             else if (State == HoverState.Crashing)
             {
@@ -474,6 +533,27 @@ namespace VehicleRaid
 
         private void TickFacingTarget()
         {
+            if (isFacingTargetNPC)
+            {
+                if (facingTargetNPC == null || facingTargetNPC.Destroyed || !facingTargetNPC.Spawned)
+                {
+                    isFacingTargetNPC = false;
+                    facingTargetNPC = null;
+                }
+                else
+                {
+                    Vector3 targetPos3 = facingTargetNPC.DrawPos;
+                    float npcDx = targetPos3.x - realPos.x;
+                    float npcDz = targetPos3.z - realPos.y;
+                    if (Mathf.Abs(npcDx) >= 0.1f || Mathf.Abs(npcDz) >= 0.1f)
+                    {
+                        flyAngle = Mathf.Atan2(npcDx, npcDz) * Mathf.Rad2Deg;
+                        RotateTowardsAngle(flyAngle);
+                    }
+                }
+                return;
+            }
+
             if (!isFacingTarget) return;
 
             Vector3 targetWorldPos;
@@ -655,6 +735,28 @@ namespace VehicleRaid
             if (Props.fleckDataPropeller != null) TryThrowFleck(Props.fleckDataPropeller, t);
         }
 
+        private void TryEmergencyRefuel()
+        {
+            if (!Vehicle.AllPawnsAboard.Any()) return;
+            
+            CompFueledTravel comp = Vehicle.GetComp<CompFueledTravel>();
+            if (comp == null || comp.Props.ElectricPowered) return;
+
+            float needed = comp.FuelCapacity - comp.Fuel;
+            if (needed <= 0) return;
+
+            var fuelThings = CompFueledTravel.AllFuelFromInventory(Vehicle);
+            int availableFuel = 0;
+            foreach (var t in fuelThings) availableFuel += t.stackCount;
+
+            if (availableFuel > 0)
+            {
+                int toConsume = Mathf.Min(availableFuel, Mathf.CeilToInt(needed));
+                comp.ConsumeFuelFromInventory(toConsume);
+                Patch_VehicleNPCOnOff.UpdateVehiclePower(Vehicle);
+            }
+        }
+
         private void StartCrashing()
         {
             State = HoverState.Crashing;
@@ -691,6 +793,7 @@ namespace VehicleRaid
             currentAltitude = 0f;
             ticksInState = 0;
             ticksWithoutPilot = 0;
+            ticksWithoutFuel = 0;
             Vehicle.Angle = 0f;
             Vehicle.Transform.rotation = 0f;
             Vehicle.ignition.Drafted = false;

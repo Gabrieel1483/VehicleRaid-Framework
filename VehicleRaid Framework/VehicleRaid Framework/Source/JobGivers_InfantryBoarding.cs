@@ -21,7 +21,8 @@ namespace VehicleRaidFramework
 
             var vehicles = pawn.Map.mapPawns.AllPawnsSpawned
                 .OfType<VehiclePawn>()
-                .Where(v => v.Faction == pawn.Faction && !v.Dead && v.Spawned && v.CanMove && v.handlers.Any(h => h.AreSlotsAvailable))
+                .Where(v => v.Faction == pawn.Faction && !v.Dead && v.Spawned && v.CanMove && v.handlers.Any(h => h.AreSlotsAvailable)
+                    && v.GetComp<VehicleRaid.CompVehicleHover>()?.IsAirborne != true)
                 .OrderBy(v => v.Position.DistanceToSquared(pawn.Position));
 
             foreach (var vehicle in vehicles)
@@ -81,6 +82,8 @@ namespace VehicleRaidFramework
             {
                 if (p is VehiclePawn v && v.Faction == pawn.Faction && !v.Dead && v.Spawned && CrewManager.HasOperationalDriver(v))
                 {
+                    if (v.GetComp<VehicleRaid.CompVehicleHover>()?.IsAirborne == true) continue;
+
                     float dist = v.Position.DistanceToSquared(pawn.Position);
                     if (dist < closestDist)
                     {

@@ -130,6 +130,28 @@
 			</li>
 			</cargoItems>
 			</li>
+
+			<li> <!-- Optional vehicles that also consume raid points. You can add as many vehicles as you want. -->
+				<kindDef>VVE_MosquitoNPC_Kind</kindDef> 
+				<weight>8</weight>
+				<forceCount>0</forceCount> 
+				<spawnVehicle>true</spawnVehicle> 
+				<cargoItems>
+			<li>
+				<thingDef>Steel</thingDef>
+				<count>111~222</count>
+			</li>
+			<li>
+				<thingDef>Chemfuel</thingDef>
+				<count>55~111</count>
+			</li>
+			<li>
+				<thingDef>MealSurvivalPack</thingDef>
+				<count>5~11</count>
+			</li>
+			</cargoItems>
+			</li>
+
 			</vehicleOptions>
 
 			<infantryPointsFraction>0.7</infantryPointsFraction> <!-- This controls the spawn rate of pawns on foot and in vehicles, ranging from 0.1 to 1. The lower the value, the more raid points the narrator will use on vehicles and the less on foot pawns. It's recommended to keep this value high because multiple vehicles can block the path of those traveling further back. -->

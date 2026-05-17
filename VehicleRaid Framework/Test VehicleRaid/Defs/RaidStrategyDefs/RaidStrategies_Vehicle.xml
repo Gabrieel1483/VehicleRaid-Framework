@@ -101,6 +101,27 @@
 			</li>
 
 			<li>
+				<kindDef>VVE_MosquitoNPC_Kind</kindDef> 
+				<weight>8</weight>
+				<forceCount>0</forceCount> 
+				<spawnVehicle>true</spawnVehicle> 
+				<cargoItems>
+			<li>
+				<thingDef>Chemfuel</thingDef>
+				<count>55~155</count>
+			</li>
+			<li>
+				<thingDef>Steel</thingDef>
+				<count>111~222</count>
+			</li>
+			<li>
+				<thingDef>MealSurvivalPack</thingDef>
+				<count>5~11</count>
+			</li>
+			</cargoItems>
+			</li>
+
+			<li>
 				<kindDef>VVE_Scytheman_Kind</kindDef> <!-- This vehicle is a mortar type, it attacks from a distance, it is important that you have the <isMortar> so that the correct behavior is applied. -->
 				<isMortar>true</isMortar>
 				<weight>5</weight>

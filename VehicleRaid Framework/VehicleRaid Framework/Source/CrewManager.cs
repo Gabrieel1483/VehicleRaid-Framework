@@ -15,7 +15,7 @@ namespace VehicleRaidFramework
         public static void ReassignCrew(VehiclePawn vehicle)
         {
             if (vehicle == null || vehicle.Faction == null || vehicle.Faction.IsPlayer || !vehicle.Spawned) return;
-            if (vehicle.VehicleDef.type == VehicleType.Air) return;
+            if (vehicle.VehicleDef.type == VehicleType.Air && vehicle.GetComp<VehicleRaid.CompVehicleHover>() == null) return;
 
             var handlers = vehicle.handlers;
             if (handlers == null || handlers.Count == 0) return;
@@ -89,7 +89,7 @@ namespace VehicleRaidFramework
         public static void CheckRetreat(VehiclePawn vehicle)
         {
             if (vehicle == null || vehicle.Faction == null || vehicle.Faction.IsPlayer || !vehicle.Spawned) return;
-            if (vehicle.VehicleDef.type == VehicleType.Air) return;
+            if (vehicle.VehicleDef.type == VehicleType.Air && vehicle.GetComp<VehicleRaid.CompVehicleHover>() == null) return;
             if (vehicle.mindState?.duty?.def == null) return;
 
             if (vehicle.mindState.duty.def.defName == "VRF_VehicleExitMap" || vehicle.mindState.duty.def == DutyDefOf.ExitMapBest) return;
@@ -338,7 +338,7 @@ namespace VehicleRaidFramework
         {
             if (__instance.ParentHolder is VehicleRoleHandler handler)
             {
-                if (handler.vehicle?.VehicleDef?.type == VehicleType.Air) return;
+                if (handler.vehicle?.VehicleDef?.type == VehicleType.Air && handler.vehicle?.GetComp<VehicleRaid.CompVehicleHover>() == null) return;
                 CrewManager.ReassignCrew(handler.vehicle);
             }
         }
@@ -352,7 +352,7 @@ namespace VehicleRaidFramework
             Pawn pawn = Traverse.Create(__instance).Field("pawn").GetValue<Pawn>();
             if (pawn?.ParentHolder is VehicleRoleHandler handler)
             {
-                if (handler.vehicle?.VehicleDef?.type == VehicleType.Air) return;
+                if (handler.vehicle?.VehicleDef?.type == VehicleType.Air && handler.vehicle?.GetComp<VehicleRaid.CompVehicleHover>() == null) return;
                 CrewManager.ReassignCrew(handler.vehicle);
             }
         }

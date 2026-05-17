@@ -48,7 +48,7 @@ namespace VehicleRaidFramework
                         {
                             IntVec3 dest = v.mindState.duty.focus.Cell;
                             
-                            if (v.VehicleDef.type == VehicleType.Air || (v.Position.InHorDistOf(dest, 4f) && !v.pather.Moving))
+                            if ((v.VehicleDef.type == VehicleType.Air && v.GetComp<VehicleRaid.CompVehicleHover>() == null) || (v.Position.InHorDistOf(dest, 4f) && !v.pather.Moving))
                             {
                                 DisembarkTrader();
                                 traderDisembarked = true;
@@ -97,7 +97,7 @@ namespace VehicleRaidFramework
                     IntVec3 mySpot = (vIndex < parkingSpots.Count) ? parkingSpots[vIndex] : data.defendPoint;
                     vIndex++;
 
-                    if (vehicle.VehicleDef.type == VehicleType.Air)
+                    if (vehicle.VehicleDef.type == VehicleType.Air && vehicle.GetComp<VehicleRaid.CompVehicleHover>() == null)
                     {
                         ownedPawn.mindState.duty = new PawnDuty(DefDatabase<DutyDef>.GetNamed("VRF_HelicopterTakeoff"), vehicle.Position);
                     }

@@ -2,7 +2,7 @@
 
 <Defs>
 	<Vehicles.VehicleTurretDef ParentName="VehicleTurretBase">
-		<defName>Mosquito_MainTurret</defName>
+		<defName>MosquitoNPC_MainTurret</defName>
 		<label>Mosquito autocannon</label>
 		<description>A heavy automatic turret mounted on a Mosquito. Its large-caliber shells do heavy damage over significant ranges, but it’s inaccurate and uses up a lot of ammo.</description>
 		

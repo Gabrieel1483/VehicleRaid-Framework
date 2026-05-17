@@ -553,17 +553,26 @@ namespace VehicleRaid
     public static class VehicleHover_VerbCanHitTargetFrom_Patch
     {
         [HarmonyPostfix]
-        public static void Postfix(Verse.Verb __instance, Verse.LocalTargetInfo targ, ref bool __result)
+        public static void Postfix(Verse.Verb __instance, IntVec3 root, Verse.LocalTargetInfo targ, ref bool __result)
         {
             if (!__result) return;
-            if (!__instance.IsMeleeAttack) return;
 
             if (targ.Thing is VehiclePawn vehicle)
             {
                 var hoverComp = vehicle.GetComp<CompVehicleHover>();
                 if (hoverComp != null && hoverComp.IsAirborne)
                 {
-                    __result = false;
+                    if (__instance.IsMeleeAttack)
+                    {
+                        __result = false;
+                        return;
+                    }
+
+                    Map map = __instance.Caster?.Map;
+                    if (map != null && map.roofGrid.RoofAt(root) == RoofDefOf.RoofRockThick)
+                    {
+                        __result = false;
+                    }
                 }
             }
         }
@@ -573,12 +582,20 @@ namespace VehicleRaid
     public static class VehicleHover_GetFloatMenuOptions_Patch
     {
         [HarmonyPostfix]
-        public static void Postfix(VehiclePawn __instance, ref IEnumerable<FloatMenuOption> __result)
+        public static void Postfix(VehiclePawn __instance, Pawn selPawn, ref IEnumerable<FloatMenuOption> __result)
         {
             var hoverComp = __instance.GetComp<CompVehicleHover>();
             if (hoverComp != null && hoverComp.IsAirborne)
             {
-                __result = Enumerable.Empty<FloatMenuOption>();
+                __result = System.Linq.Enumerable.Empty<FloatMenuOption>();
+                return;
+            }
+
+            if (__instance.Faction != null && selPawn != null &&
+                selPawn.Faction == Faction.OfPlayer &&
+                __instance.Faction != Faction.OfPlayer)
+            {
+                __result = System.Linq.Enumerable.Empty<FloatMenuOption>();
             }
         }
     }

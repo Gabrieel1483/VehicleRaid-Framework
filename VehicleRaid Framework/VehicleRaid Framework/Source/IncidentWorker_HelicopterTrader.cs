@@ -68,7 +68,7 @@ namespace VehicleRaidFramework
                 heli.GetHandler(heli.VehicleDef.properties.roles.First().key).thingOwner.TryAdd(trader);
             }
 
-            FillCrew(heli, mapper?.principalVehicle, faction, map);
+            FillCrew(heli, faction, map);
 
             List<Thing> stock = ThingSetMakerDefOf.TraderStock.root.Generate(new ThingSetMakerParams { traderDef = traderKind, tile = map.Tile, makingFaction = faction });
             foreach (Thing t in stock) heli.inventory.innerContainer.TryAdd(t);

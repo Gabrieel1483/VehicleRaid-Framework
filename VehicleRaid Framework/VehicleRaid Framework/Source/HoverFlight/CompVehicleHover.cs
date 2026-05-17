@@ -12,7 +12,8 @@ namespace VehicleRaid
         Grounded,
         TakingOff,
         Hovering,
-        Landing
+        Landing,
+        Crashing
     }
 
     public class CompVehicleHover : VehicleComp
@@ -31,14 +32,26 @@ namespace VehicleRaid
 
         private LocalTargetInfo facingTarget = LocalTargetInfo.Invalid;
         private bool isFacingTarget = false;
+        
+        public LocalTargetInfo attackTarget = LocalTargetInfo.Invalid;
+        public bool isAttackingTarget = false;
+        private int turretUpdateTicks = 0;
+
+        private int ticksWithoutPilot = 0;
+        private float crashStartAltitude = 0f;
+        private const int CrashDelayTicks = 180;
+        private const int CrashDurationTicks = 90;
 
         public CompProperties_VehicleHover Props => (CompProperties_VehicleHover)props;
 
-        public bool IsAirborne => State == HoverState.Hovering || State == HoverState.TakingOff || State == HoverState.Landing;
+        public bool IsAirborne => State == HoverState.Hovering || State == HoverState.TakingOff || State == HoverState.Landing || State == HoverState.Crashing;
 
         private Command_Action takeoffCommand;
         private Command_Action landCommand;
-        private Command_Toggle faceTargetCommand;
+        private Command_Action faceTargetCommand;
+        private Command_Action attackTargetCommand;
+        private Command_Action cancelTargetCommand;
+        private Command_Action jumpCommand;
 
         public override void PostSpawnSetup(bool respawningAfterLoad)
         {
@@ -63,6 +76,11 @@ namespace VehicleRaid
             Scribe_Values.Look(ref currentFlyAngle, "currentFlyAngle", 0f);
             Scribe_Values.Look(ref isFacingTarget, "isFacingTarget", false);
             Scribe_TargetInfo.Look(ref facingTarget, "facingTarget");
+            Scribe_Values.Look(ref isAttackingTarget, "isAttackingTarget", false);
+            Scribe_TargetInfo.Look(ref attackTarget, "attackTarget");
+            Scribe_Values.Look(ref turretUpdateTicks, "turretUpdateTicks", 0);
+            Scribe_Values.Look(ref ticksWithoutPilot, "ticksWithoutPilot", 0);
+            Scribe_Values.Look(ref crashStartAltitude, "crashStartAltitude", 0f);
         }
 
         public override IEnumerable<Gizmo> CompGetGizmosExtra()
@@ -94,13 +112,61 @@ namespace VehicleRaid
 
             if (faceTargetCommand == null)
             {
-                faceTargetCommand = new Command_Toggle
+                faceTargetCommand = new Command_Action
                 {
-                    defaultLabel = "Apuntar objetivo",
-                    defaultDesc = "El vehículo mirará siempre hacia el objetivo seleccionado. Pulsa de nuevo para cancelar.",
+                    defaultLabel = "Mirar objetivo",
+                    defaultDesc = "El vehículo apuntará frontalmente hacia el objetivo seleccionado.",
                     icon = ContentFinder<Texture2D>.Get("UI/Commands/Attack"),
-                    isActive = () => isFacingTarget,
-                    toggleAction = ToggleFaceTarget
+                    action = StartFaceTarget
+                };
+            }
+
+            if (attackTargetCommand == null)
+            {
+                attackTargetCommand = new Command_Action
+                {
+                    defaultLabel = "Atacar objetivo",
+                    defaultDesc = "El vehículo apuntará frontalmente hacia el objetivo y las torretas lo atacarán automáticamente.",
+                    icon = ContentFinder<Texture2D>.Get("UI/Commands/Attack"),
+                    action = StartAttackTarget,
+                    hotKey = KeyBindingDefOf.Misc1
+                };
+            }
+
+            if (cancelTargetCommand == null)
+            {
+                cancelTargetCommand = new Command_Action
+                {
+                    defaultLabel = "Cancelar objetivo",
+                    defaultDesc = "Cancela el objetivo actual.",
+                    icon = ContentFinder<Texture2D>.Get("UI/Designators/Cancel"),
+                    action = CancelTarget
+                };
+            }
+
+            if (jumpCommand == null)
+            {
+                jumpCommand = new Command_Action
+                {
+                    defaultLabel = "VRF_HoverJump".Translate(),
+                    defaultDesc = "VRF_HoverJumpDesc".Translate(),
+                    icon = ContentFinder<Texture2D>.Get("UI/Commands/Jump"),
+                    action = delegate
+                    {
+                        List<FloatMenuOption> list = new List<FloatMenuOption>();
+                        foreach (Pawn p in Vehicle.AllPawnsAboard)
+                        {
+                            Pawn pawn = p;
+                            list.Add(new FloatMenuOption(pawn.LabelShort, delegate
+                            {
+                                Vehicle.DisembarkPawn(pawn);
+                            }));
+                        }
+                        if (list.Count > 0)
+                        {
+                            Find.WindowStack.Add(new FloatMenu(list));
+                        }
+                    }
                 };
             }
 
@@ -108,12 +174,14 @@ namespace VehicleRaid
             {
                 takeoffCommand.Disabled = false;
                 takeoffCommand.disabledReason = null;
+                
                 if (!Vehicle.Drafted)
                     takeoffCommand.Disable("El motor debe estar encendido para despegar.");
                 else if (!Vehicle.HasEnoughOperators || Vehicle.PawnCountToOperateLeft > 0)
                     takeoffCommand.Disable("VF_NotEnoughToOperate".Translate());
                 else if (Ext_Vehicles.IsRoofed(Vehicle.Position, Vehicle.Map))
                     takeoffCommand.Disable("CommandLaunchGroupFailUnderRoof".Translate());
+                
                 yield return takeoffCommand;
             }
             else if (State == HoverState.Hovering || State == HoverState.TakingOff)
@@ -125,19 +193,29 @@ namespace VehicleRaid
                     landCommand.Disable("CommandLaunchGroupFailUnderRoof".Translate());
                 yield return landCommand;
 
-                yield return faceTargetCommand;
+                if (isAttackingTarget || isFacingTarget)
+                {
+                    yield return cancelTargetCommand;
+                }
+                else
+                {
+                    faceTargetCommand.Disabled = !Vehicle.HasEnoughOperators;
+                    if (!Vehicle.HasEnoughOperators)
+                        faceTargetCommand.disabledReason = "El vehículo necesita un piloto.";
+                    yield return faceTargetCommand;
+
+                    attackTargetCommand.Disabled = !Vehicle.HasEnoughOperators;
+                    if (!Vehicle.HasEnoughOperators)
+                        attackTargetCommand.disabledReason = "El vehículo necesita un piloto.";
+                    yield return attackTargetCommand;
+                }
+
+                yield return jumpCommand;
             }
         }
 
-        private void ToggleFaceTarget()
+        private void StartFaceTarget()
         {
-            if (isFacingTarget)
-            {
-                isFacingTarget = false;
-                facingTarget = LocalTargetInfo.Invalid;
-                return;
-            }
-
             TargetingParameters parms = new TargetingParameters
             {
                 canTargetPawns = true,
@@ -153,6 +231,86 @@ namespace VehicleRaid
                 facingTarget = target;
                 isFacingTarget = true;
             }, null, null, null, null, null, true);
+        }
+
+        private void StartAttackTarget()
+        {
+            TargetingParameters parms = new TargetingParameters
+            {
+                canTargetPawns = true,
+                canTargetBuildings = true,
+                canTargetLocations = false,
+                canTargetAnimals = true,
+                canTargetHumans = true,
+                canTargetMechs = true,
+                validator = (TargetInfo targ) =>
+                {
+                    if (!targ.HasThing) return false;
+                    Thing thing = targ.Thing;
+                    if (thing == Vehicle) return false;
+                    if (thing.Faction == Vehicle.Faction) return false;
+                    if (thing is Pawn pawn && pawn.Dead) return false;
+                    return true;
+                }
+            };
+
+            Find.Targeter.BeginTargeting(parms, target =>
+            {
+                attackTarget = target;
+                isAttackingTarget = true;
+                facingTarget = target;
+                isFacingTarget = true;
+                turretUpdateTicks = 0;
+            }, null, null, null, null, null, true);
+        }
+
+        private void CancelTarget()
+        {
+            if (isAttackingTarget)
+            {
+                ClearTurretTargets();
+            }
+            isAttackingTarget = false;
+            attackTarget = LocalTargetInfo.Invalid;
+            isFacingTarget = false;
+            facingTarget = LocalTargetInfo.Invalid;
+        }
+
+        private void AssignTurretTargets()
+        {
+            if (!attackTarget.IsValid || !attackTarget.HasThing) return;
+            
+            var turretComp = Vehicle.CompVehicleTurrets;
+            if (turretComp == null || turretComp.turrets == null) return;
+            
+            foreach (var turret in turretComp.turrets)
+            {
+                if (turret == null) continue;
+                if (!turret.IsManned) continue;
+                if (!turret.InRange(attackTarget)) continue;
+                
+                if (turret.targetInfo != attackTarget)
+                {
+                    turret.SetTarget(attackTarget);
+                }
+            }
+        }
+
+        private void ClearTurretTargets()
+        {
+            if (!attackTarget.IsValid) return;
+            
+            var turretComp = Vehicle.CompVehicleTurrets;
+            if (turretComp == null || turretComp.turrets == null) return;
+            
+            foreach (var turret in turretComp.turrets)
+            {
+                if (turret == null) continue;
+                if (turret.targetInfo == attackTarget)
+                {
+                    turret.SetTarget(LocalTargetInfo.Invalid);
+                }
+            }
         }
 
         public void SetTarget(Vector3 worldPos)
@@ -182,8 +340,7 @@ namespace VehicleRaid
         {
             if (State != HoverState.Hovering && State != HoverState.TakingOff) return;
 
-            isFacingTarget = false;
-            facingTarget = LocalTargetInfo.Invalid;
+            CancelTarget();
             hasTarget = false;
             moveSpeed = 0f;
 
@@ -222,6 +379,8 @@ namespace VehicleRaid
         {
             base.CompTick();
 
+            if (!Vehicle.Spawned || Vehicle.Map == null) return;
+
             if (State == HoverState.TakingOff)
             {
                 ticksInState++;
@@ -258,7 +417,59 @@ namespace VehicleRaid
                 UpdatePropellerSpeed();
                 TickFacingTarget();
                 TickHoverMovement();
+                TickAttackTarget();
+
+                if (!Vehicle.HasEnoughOperators)
+                {
+                    ticksWithoutPilot++;
+                    if (ticksWithoutPilot % 30 == 0 && Vehicle.Spawned)
+                        FleckMaker.ThrowSmoke(new Vector3(realPos.x, 0f, realPos.y), Vehicle.Map, 1f);
+                    if (ticksWithoutPilot >= CrashDelayTicks)
+                        StartCrashing();
+                }
+                else
+                {
+                    ticksWithoutPilot = 0;
+                }
             }
+            else if (State == HoverState.Crashing)
+            {
+                ticksInState++;
+                float t = Mathf.Clamp01((float)ticksInState / CrashDurationTicks);
+                Vehicle.Angle = Mathf.Lerp(0f, 45f, t);
+
+                float speed = Props.hoverMoveSpeed * 0.4f / 60f;
+                float rad = currentFlyAngle * Mathf.Deg2Rad;
+                realPos += new Vector2(Mathf.Sin(rad), Mathf.Cos(rad)) * speed * (1f - t * 0.5f);
+                UpdateGridPosition();
+
+                currentAltitude = Mathf.Lerp(crashStartAltitude, -0.3f, t);
+
+                if (ticksInState % 4 == 0 && Vehicle.Spawned)
+                {
+                    FleckMaker.ThrowSmoke(new Vector3(realPos.x, 0f, realPos.y), Vehicle.Map, 2f);
+                    if (t > 0.5f)
+                        FleckMaker.ThrowMicroSparks(new Vector3(realPos.x, 0f, realPos.y), Vehicle.Map);
+                }
+
+                if (ticksInState >= CrashDurationTicks)
+                    CrashImpact();
+            }
+        }
+
+        private void TickAttackTarget()
+        {
+            if (!isAttackingTarget) return;
+
+            if (attackTarget.HasThing && (attackTarget.Thing == null || attackTarget.Thing.Destroyed || !attackTarget.Thing.Spawned))
+            {
+                CancelTarget();
+                return;
+            }
+
+            if (Find.TickManager.TicksGame % 15 != 0) return;
+
+            AssignTurretTargets();
         }
 
         private void TickFacingTarget()
@@ -273,6 +484,10 @@ namespace VehicleRaid
                 {
                     isFacingTarget = false;
                     facingTarget = LocalTargetInfo.Invalid;
+                    if (isAttackingTarget)
+                    {
+                        CancelTarget();
+                    }
                     return;
                 }
                 targetWorldPos = facingTarget.Thing.DrawPos;
@@ -387,6 +602,7 @@ namespace VehicleRaid
 
         private void SnapPositionToGrid()
         {
+            if (!Vehicle.Spawned || Vehicle.Map == null) return;
             IntVec3 newPos = new IntVec3(Mathf.RoundToInt(realPos.x - 0.5f), 0, Mathf.RoundToInt(realPos.y - 0.5f));
             if (newPos.InBounds(Vehicle.Map) && newPos != Vehicle.Position)
                 Vehicle.Position = newPos;
@@ -394,6 +610,7 @@ namespace VehicleRaid
 
         private void UpdateGridPosition()
         {
+            if (!Vehicle.Spawned || Vehicle.Map == null) return;
             IntVec3 newPos = new IntVec3((int)realPos.x, 0, (int)realPos.y);
             if (newPos.InBounds(Vehicle.Map) && newPos != Vehicle.Position)
                 Vehicle.Position = newPos;
@@ -436,6 +653,52 @@ namespace VehicleRaid
 
             if (Props.fleckDataVertical != null) TryThrowFleck(Props.fleckDataVertical, t);
             if (Props.fleckDataPropeller != null) TryThrowFleck(Props.fleckDataPropeller, t);
+        }
+
+        private void StartCrashing()
+        {
+            State = HoverState.Crashing;
+            ticksInState = 0;
+            crashStartAltitude = currentAltitude;
+            CancelTarget();
+            hasTarget = false;
+            moveSpeed = 0f;
+            for (int i = Vehicle.AllPawnsAboard.Count - 1; i >= 0; i--)
+                Vehicle.DisembarkPawn(Vehicle.AllPawnsAboard[i]);
+        }
+
+        private void CrashImpact()
+        {
+            if (!Vehicle.Spawned) return;
+
+            Map map = Vehicle.Map;
+            IntVec3 pos = Vehicle.Position;
+
+            for (int i = 0; i < 5; i++)
+                Vehicle.TakeDamage(new DamageInfo(DamageDefOf.Bomb, 30f));
+
+            GenExplosion.DoExplosion(pos, map, 2.5f, DamageDefOf.Bomb, null, 15);
+            GenExplosion.DoExplosion(pos, map, 1.5f, DamageDefOf.Flame, null);
+
+            for (int i = 0; i < 8; i++)
+            {
+                IntVec3 cell = pos + GenRadial.RadialPattern[i];
+                if (cell.InBounds(map))
+                    FleckMaker.ThrowDustPuff(cell.ToVector3Shifted(), map, 2.5f);
+            }
+
+            State = HoverState.Grounded;
+            currentAltitude = 0f;
+            ticksInState = 0;
+            ticksWithoutPilot = 0;
+            Vehicle.Angle = 0f;
+            Vehicle.Transform.rotation = 0f;
+            Vehicle.ignition.Drafted = false;
+            SnapPositionToGrid();
+            UpdatePropellerSpeed();
+
+            if (Vehicle.Faction == Faction.OfPlayer)
+                Messages.Message("VRF_VehicleCrashed".Translate(Vehicle.LabelShort), Vehicle, MessageTypeDefOf.NegativeEvent);
         }
 
         private void TryThrowFleck(FleckData fleckData, float t)

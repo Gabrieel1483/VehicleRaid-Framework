@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "tS2+pElljiw=",
+  "dgSpecHash": "cVJaJkLeOFg=",
   "success": true,
-  "projectFilePath": "D:\\Programas\\steamapps\\common\\RimWorld\\Mods\\VehicleRaid Framework\\Source\\VehicleRaidFramework.csproj",
+  "projectFilePath": "d:\\Programas\\steamapps\\common\\RimWorld\\Mods\\VehicleRaid Framework\\Source\\VehicleRaidFramework.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\gabri\\.nuget\\packages\\krafs.publicizer\\2.2.1\\krafs.publicizer.2.2.1.nupkg.sha512"
   ],

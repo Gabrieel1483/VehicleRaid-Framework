@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Defs>
+	<Vehicles.AirdropDef ParentName="AerialVehicleAirdrop">
+		<defName>VRF_HoverEjectParatrooper</defName>
+		<label>Hover Eject</label>
+		
+		<skyfaller>
+			<ticksToImpactRange>20~30</ticksToImpactRange>
+			<speed>0.12</speed>
+			<impactSound>Longjump_Land</impactSound>
+		</skyfaller>
+
+		<parachuteGraphicData>
+			<texPath>Graphics/Parachute/Parachute</texPath>
+			<graphicClass>Graphic_Single</graphicClass>
+			<shaderType>Cutout</shaderType>
+			<color>(90, 110, 90)</color>
+			<drawSize>(2, 2)</drawSize>
+			<drawOffset>(0, 0, 1)</drawOffset>
+		</parachuteGraphicData>
+		
+		<ropes>
+			<li>
+				<from>(-0.8, 1)</from>
+				<to>(0, 0)</to>
+				<layer>-1</layer>
+			</li>
+			<li>
+				<from>(0.8, 1)</from>
+				<to>(0, 0)</to>
+				<layer>-1</layer>
+			</li>
+			<li>
+				<from>(-0.5, 1.2)</from>
+				<to>(0, 0)</to>
+				<layer>-1</layer>
+			</li>
+			<li>
+				<from>(0.5, 1.2)</from>
+				<to>(0, 0)</to>
+				<layer>-1</layer>
+			</li>
+		</ropes>
+	</Vehicles.AirdropDef>
+</Defs>

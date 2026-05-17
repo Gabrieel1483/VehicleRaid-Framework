@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <VRF_HoverTakeoff>Despegar</VRF_HoverTakeoff>
+  <VRF_HoverTakeoffDesc>El vehículo despega y gana altura.</VRF_HoverTakeoffDesc>
+  <VRF_HoverLand>Aterrizar</VRF_HoverLand>
+  <VRF_HoverLandDesc>El vehículo desciende y aterriza.</VRF_HoverLandDesc>
+  <VRF_HoverFaceTarget>Apuntar objetivo</VRF_HoverFaceTarget>
+  <VRF_HoverFaceTargetDesc>El vehículo mirará siempre hacia el objetivo seleccionado.</VRF_HoverFaceTargetDesc>
+  <VRF_HoverAttackTarget>Atacar</VRF_HoverAttackTarget>
+  <VRF_HoverAttackTargetDesc>El vehículo apuntará frontalmente y ordenará a todas sus torretas (tripuladas o automáticas) disparar al objetivo en cuanto esté a su alcance.</VRF_HoverAttackTargetDesc>
+  <VRF_HoverCancelTarget>Cancelar objetivo</VRF_HoverCancelTarget>
+  <VRF_HoverCancelTargetDesc>Cancela el seguimiento automático y la orden de ataque al objetivo actual.</VRF_HoverCancelTargetDesc>
+  <VRF_HoverEngineOff>El motor debe estar encendido para despegar.</VRF_HoverEngineOff>
+  <VRF_HoverJump>Salta</VRF_HoverJump>
+  <VRF_HoverJumpDesc>Ordena a un colono saltar del vehículo con un paracaídas.</VRF_HoverJumpDesc>
+  <VRF_HoverNoPilot>Sin piloto a bordo. El vehículo se estrellará.</VRF_HoverNoPilot>
+  <VRF_VehicleCrashed>¡{0} se ha estrellado!</VRF_VehicleCrashed>
+</LanguageData>

@@ -93,18 +93,33 @@ namespace VehicleRaid
     public static class VehicleHover_DynamicDrawPhaseAt_Patch
     {
         [HarmonyPrefix]
-        public static void Prefix(VehiclePawn __instance, DrawPhase phase, ref Vector3 drawLoc, bool flip)
+        public static void Prefix(VehiclePawn __instance, DrawPhase phase, ref Vector3 drawLoc, bool flip, out AltitudeLayer __state)
         {
-            if (phase != (DrawPhase)2) return;
+            __state = __instance.def.altitudeLayer; 
+            
             var hoverComp = __instance.GetComp<CompVehicleHover>();
             if (hoverComp == null || hoverComp.State == HoverState.Grounded) return;
 
+            bool isFogged = __instance.Map != null && __instance.Position.InBounds(__instance.Map) && __instance.Map.fogGrid.IsFogged(__instance.Position);
+            AltitudeLayer targetLayer = isFogged ? AltitudeLayer.MetaOverlays : AltitudeLayer.MoteOverhead;
+
+            __instance.def.altitudeLayer = targetLayer;
+
             drawLoc.x = hoverComp.realPos.x;
             drawLoc.z = hoverComp.realPos.y + hoverComp.currentAltitude;
-            drawLoc.y = AltitudeLayer.MetaOverlays.AltitudeFor();
+            drawLoc.y = targetLayer.AltitudeFor();
 
-            Vector3 vehiclePos = new Vector3(hoverComp.realPos.x, 0f, hoverComp.realPos.y + hoverComp.currentAltitude);
-            HoverDrawUtils.DrawShadow(__instance, hoverComp, hoverComp.Props, vehiclePos);
+            if (phase == (DrawPhase)2)
+            {
+                Vector3 vehiclePos = new Vector3(hoverComp.realPos.x, 0f, hoverComp.realPos.y + hoverComp.currentAltitude);
+                HoverDrawUtils.DrawShadow(__instance, hoverComp, hoverComp.Props, vehiclePos);
+            }
+        }
+
+        [HarmonyPostfix]
+        public static void Postfix(VehiclePawn __instance, AltitudeLayer __state)
+        {
+            __instance.def.altitudeLayer = __state;
         }
     }
 
@@ -115,11 +130,15 @@ namespace VehicleRaid
         public static void Postfix(VehicleDrawTracker __instance, ref Vector3 __result)
         {
             var vehicle = __instance.vehicle;
-            if (vehicle == null) return;
             var hoverComp = vehicle.GetComp<CompVehicleHover>();
             if (hoverComp == null || hoverComp.State == HoverState.Grounded) return;
 
-            __result = new Vector3(hoverComp.realPos.x, vehicle.def.Altitude, hoverComp.realPos.y + hoverComp.currentAltitude);
+            bool isFogged = vehicle.Map != null && vehicle.Position.InBounds(vehicle.Map) && vehicle.Map.fogGrid.IsFogged(vehicle.Position);
+            AltitudeLayer targetLayer = isFogged ? AltitudeLayer.MetaOverlays : AltitudeLayer.MoteOverhead;
+
+            __result.x = hoverComp.realPos.x;
+            __result.z = hoverComp.realPos.y + hoverComp.currentAltitude;
+            __result.y = targetLayer.AltitudeFor();
         }
     }
 
@@ -225,6 +244,7 @@ namespace VehicleRaid
                 var hoverComp = vehicle.GetComp<CompVehicleHover>();
                 if (hoverComp == null || hoverComp.State != HoverState.Hovering) continue;
                 if (vehicle.Faction != Faction.OfPlayer) continue;
+                if (!vehicle.HasEnoughOperators) continue;
 
                 hoverComp.SetTarget(mousePos);
                 FleckMaker.Static(cell, map, FleckDefOf.FeedbackGoto);
@@ -255,6 +275,20 @@ namespace VehicleRaid
         }
     }
 
+    [HarmonyPatch(typeof(VehiclePawn), nameof(VehiclePawn.SurroundingCells), MethodType.Getter)]
+    public static class VehicleHover_SurroundingCells_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(VehiclePawn __instance, ref IEnumerable<IntVec3> __result)
+        {
+            var hoverComp = __instance.GetComp<CompVehicleHover>();
+            if (hoverComp != null && hoverComp.IsAirborne)
+            {
+                __result = Enumerable.Empty<IntVec3>();
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(VehiclePawn), nameof(VehiclePawn.DisembarkPawn))]
     public static class VehicleHover_DisembarkPawn_Patch
     {
@@ -263,6 +297,49 @@ namespace VehicleRaid
         {
             var hoverComp = __instance.GetComp<CompVehicleHover>();
             if (hoverComp == null || !hoverComp.IsAirborne) return true;
+            if (!__instance.Spawned || __instance.Map == null) return true;
+
+            if (!__instance.RemovePawn(pawn)) return false;
+
+            Map map = __instance.Map;
+            IntVec3 vehiclePos = __instance.Position;
+
+            IntVec3 dropCell = vehiclePos;
+            CellRect rect = GenAdj.OccupiedRect((Thing)__instance).ExpandedBy(1);
+            IntVec3 candidate;
+            if (GenCollection.TryRandomElement<IntVec3>(
+                rect.EdgeCells.Where<IntVec3>(c =>
+                    GenGrid.InBounds(c, map) &&
+                    GenGrid.Standable(c, map) &&
+                    !GridsUtility.GetThingList(c, map).Any(t => t is Pawn)),
+                out candidate))
+            {
+                dropCell = candidate;
+            }
+
+            AirdropDef airdropDef = DefDatabase<AirdropDef>.GetNamedSilentFail("VRF_HoverEjectParatrooper");
+            if (airdropDef != null)
+            {
+                try
+                {
+                    AirdropSkyfaller skyfaller = (AirdropSkyfaller)ThingMaker.MakeThing((ThingDef)airdropDef, null);
+                    if (pawn.Spawned) pawn.DeSpawn(DestroyMode.Vanish);
+                    skyfaller.innerContainer.TryAddOrTransfer((Thing)pawn, true);
+                    GenSpawn.Spawn((Thing)skyfaller, dropCell, map, WipeMode.Vanish);
+                }
+                catch (System.Exception ex)
+                {
+                    Log.Warning("[VRF] Parachute spawn failed, using fallback: " + ex.Message);
+                    if (!pawn.Spawned)
+                        GenSpawn.Spawn((Thing)pawn, dropCell, map, WipeMode.Vanish);
+                }
+            }
+            else
+            {
+                if (!pawn.Spawned)
+                    GenSpawn.Spawn((Thing)pawn, dropCell, map, WipeMode.Vanish);
+            }
+
             return false;
         }
     }
@@ -443,6 +520,309 @@ namespace VehicleRaid
 
             __result = diff < span;
             return false;
+        }
+    }
+
+    [HarmonyPatch]
+    public static class VehicleHover_CanReach_Patch
+    {
+        public static MethodBase TargetMethod()
+        {
+            var method15 = AccessTools.Method(typeof(ReachabilityUtility), nameof(ReachabilityUtility.CanReach), new Type[] { typeof(Pawn), typeof(LocalTargetInfo), typeof(PathEndMode), typeof(Danger), typeof(bool), typeof(bool), typeof(TraverseMode) });
+            if (method15 != null) return method15;
+
+            return AccessTools.Method(typeof(ReachabilityUtility), nameof(ReachabilityUtility.CanReach), new Type[] { typeof(Pawn), typeof(LocalTargetInfo), typeof(PathEndMode), typeof(Danger), typeof(bool), typeof(TraverseMode) });
+        }
+
+        [HarmonyPostfix]
+        public static void Postfix(LocalTargetInfo dest, ref bool __result)
+        {
+            if (!__result) return;
+            if (dest.Thing is VehiclePawn vehicle)
+            {
+                var hoverComp = vehicle.GetComp<CompVehicleHover>();
+                if (hoverComp != null && hoverComp.IsAirborne)
+                {
+                    __result = false;
+                }
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(Verse.Verb), nameof(Verse.Verb.CanHitTargetFrom))]
+    public static class VehicleHover_VerbCanHitTargetFrom_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(Verse.Verb __instance, Verse.LocalTargetInfo targ, ref bool __result)
+        {
+            if (!__result) return;
+            if (!__instance.IsMeleeAttack) return;
+
+            if (targ.Thing is VehiclePawn vehicle)
+            {
+                var hoverComp = vehicle.GetComp<CompVehicleHover>();
+                if (hoverComp != null && hoverComp.IsAirborne)
+                {
+                    __result = false;
+                }
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(VehiclePawn), nameof(VehiclePawn.GetFloatMenuOptions))]
+    public static class VehicleHover_GetFloatMenuOptions_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(VehiclePawn __instance, ref IEnumerable<FloatMenuOption> __result)
+        {
+            var hoverComp = __instance.GetComp<CompVehicleHover>();
+            if (hoverComp != null && hoverComp.IsAirborne)
+            {
+                __result = Enumerable.Empty<FloatMenuOption>();
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(Verse.AI.ReservationManager), nameof(Verse.AI.ReservationManager.CanReserve))]
+    public static class VehicleHover_CanReserve_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(Verse.LocalTargetInfo target, ref bool __result)
+        {
+            if (!__result) return;
+            if (target.HasThing && target.Thing is VehiclePawn vehicle)
+            {
+                var hoverComp = vehicle.GetComp<CompVehicleHover>();
+                if (hoverComp != null && hoverComp.IsAirborne)
+                {
+                    __result = false;
+                }
+            }
+        }
+    }
+    [HarmonyPatch(typeof(Verse.AI.AttackTargetFinder), nameof(Verse.AI.AttackTargetFinder.BestAttackTarget))]
+    public static class VehicleHover_BestAttackTarget_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(IAttackTargetSearcher searcher, ref IAttackTarget __result)
+        {
+            if (__result != null && __result.Thing is VehiclePawn vehicle)
+            {
+                var hoverComp = vehicle.GetComp<CompVehicleHover>();
+                if (hoverComp != null && hoverComp.IsAirborne)
+                {
+                    var verb = searcher.CurrentEffectiveVerb;
+                    if (verb != null && verb.verbProps.IsMeleeAttack)
+                    {
+                        __result = null;
+                    }
+                }
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(Verse.Reachability), nameof(Verse.Reachability.CanReach), new Type[] { typeof(IntVec3), typeof(LocalTargetInfo), typeof(PathEndMode), typeof(TraverseParms) })]
+    public static class VehicleHover_CoreReachability_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(LocalTargetInfo dest, ref bool __result)
+        {
+            if (!__result) return;
+            if (dest.HasThing && dest.Thing is VehiclePawn vehicle)
+            {
+                var hoverComp = vehicle.GetComp<CompVehicleHover>();
+                if (hoverComp != null && hoverComp.IsAirborne)
+                {
+                    __result = false;
+                }
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(Verse.AI.PathGrid), "CalculatedCostAt")]
+    public static class VehicleHover_PathGridCost_Patch
+    {
+        private static FieldInfo mapField = AccessTools.Field(typeof(Verse.AI.PathGrid), "map");
+
+        [HarmonyPriority(Priority.Last)]
+        [HarmonyPostfix]
+        public static void Postfix(Verse.AI.PathGrid __instance, IntVec3 c, ref int __result)
+        {
+            Map map = (Map)mapField.GetValue(__instance);
+            if (map == null) return;
+
+            var thingList = map.thingGrid.ThingsListAtFast(c);
+            bool hasAirborne = false;
+
+            for (int i = 0; i < thingList.Count; i++)
+            {
+                if (thingList[i] is VehiclePawn vehicle)
+                {
+                    var hoverComp = vehicle.GetComp<CompVehicleHover>();
+                    if (hoverComp != null && hoverComp.IsAirborne)
+                    {
+                        hasAirborne = true;
+                        break;
+                    }
+                }
+            }
+
+            if (hasAirborne)
+            {
+                bool originalImpassable = false;
+                int baseCost = map.terrainGrid.TerrainAt(c).pathCost;
+
+                for (int i = 0; i < thingList.Count; i++)
+                {
+                    Thing t = thingList[i];
+                    if (t is VehiclePawn) continue; 
+                    
+                    if (t.def.passability == Verse.Traversability.Impassable)
+                    {
+                        originalImpassable = true;
+                        break;
+                    }
+                    baseCost += t.def.pathCost;
+                }
+
+                if (!originalImpassable)
+                {
+                    __result = baseCost;
+                }
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(Verse.Thing), nameof(Verse.Thing.BlocksPawn))]
+    public static class VehicleHover_BlocksPawn_Patch
+    {
+        [HarmonyPriority(Priority.Last)]
+        [HarmonyPostfix]
+        public static void Postfix(Verse.Thing __instance, Pawn p, ref bool __result)
+        {
+            if (!__result) return;
+            if (__instance is VehiclePawn vehicle)
+            {
+                var hoverComp = vehicle.GetComp<CompVehicleHover>();
+                if (hoverComp != null && hoverComp.IsAirborne)
+                {
+                    __result = false;
+                }
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    public static class VehicleHover_CostToMoveIntoCell_Patch
+    {
+        public static MethodBase TargetMethod()
+        {
+            return AccessTools.Method(typeof(Verse.AI.Pawn_PathFollower), "CostToMoveIntoCell", new System.Type[] { typeof(Pawn), typeof(Verse.IntVec3) });
+        }
+
+        [HarmonyPriority(Priority.Last)]
+        [HarmonyPostfix]
+        public static void Postfix(Pawn pawn, Verse.IntVec3 c, ref float __result)
+        {
+            if (pawn?.Map == null) return;
+            var thingList = pawn.Map.thingGrid.ThingsListAtFast(c);
+            bool underVehicle = false;
+            
+            for (int i = 0; i < thingList.Count; i++)
+            {
+                if (thingList[i] is VehiclePawn vehicle && vehicle.GetComp<CompVehicleHover>()?.IsAirborne == true)
+                {
+                    underVehicle = true;
+                    break;
+                }
+            }
+
+            if (underVehicle)
+            {
+                float baseTicks = (c.x == pawn.Position.x || c.z == pawn.Position.z) ? pawn.TicksPerMoveCardinal : pawn.TicksPerMoveDiagonal;
+                float terrainCost = pawn.Map.terrainGrid.TerrainAt(c).pathCost;
+                
+                for (int i = 0; i < thingList.Count; i++)
+                {
+                    Thing t = thingList[i];
+                    if (t is VehiclePawn) continue;
+                    terrainCost += t.def.pathCost;
+                }
+
+                __result = baseTicks + terrainCost;
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(Verse.PawnCollisionTweenerUtility), "PawnCollisionPosOffsetFor")]
+    public static class VehicleHover_PawnCollisionPosOffsetFor_Patch
+    {
+        [HarmonyPrefix]
+        public static bool Prefix(Pawn pawn, ref UnityEngine.Vector3 __result)
+        {
+            if (pawn?.Map == null) return true;
+            
+            if (pawn is VehiclePawn vehicle && vehicle.GetComp<CompVehicleHover>()?.IsAirborne == true)
+            {
+                __result = UnityEngine.Vector3.zero;
+                return false;
+            }
+
+            var thingList = pawn.Map.thingGrid.ThingsListAtFast(pawn.Position);
+            for (int i = 0; i < thingList.Count; i++)
+            {
+                if (thingList[i] is VehiclePawn vp && vp.GetComp<CompVehicleHover>()?.IsAirborne == true)
+                {
+                    __result = UnityEngine.Vector3.zero;
+                    return false;
+                }
+            }
+
+            if (pawn.pather != null && pawn.pather.MovingNow)
+            {
+                var nextThingList = pawn.Map.thingGrid.ThingsListAtFast(pawn.pather.nextCell);
+                for (int i = 0; i < nextThingList.Count; i++)
+                {
+                    if (nextThingList[i] is VehiclePawn vp && vp.GetComp<CompVehicleHover>()?.IsAirborne == true)
+                    {
+                        __result = UnityEngine.Vector3.zero;
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+    }
+
+
+    [HarmonyPatch(typeof(CompVehicleLauncher), nameof(CompVehicleLauncher.SetTimedDeployment))]
+    public static class VehicleHover_SetTimedDeployment_Patch
+    {
+        [HarmonyPrefix]
+        public static bool Prefix(CompVehicleLauncher __instance)
+        {
+            var hoverComp = __instance.Vehicle.GetComp<CompVehicleHover>();
+            if (hoverComp != null && hoverComp.State == HoverState.Hovering)
+                return false;
+            return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(VehicleSkyfaller_Arriving), nameof(VehicleSkyfaller_Arriving.FinalizeLanding))]
+    public static class VehicleHover_FinalizeLanding_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(VehicleSkyfaller_Arriving __instance)
+        {
+            VehiclePawn vehicle = __instance.vehicle;
+            if (vehicle == null) return;
+
+            var hoverComp = vehicle.GetComp<CompVehicleHover>();
+            if (hoverComp == null) return;
+
+            if (hoverComp.State == HoverState.Hovering)
+                vehicle.CompVehicleLauncher.inFlight = false;
         }
     }
 }

@@ -1,0 +1,363 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Verse;
+using Verse.AI;
+using RimWorld;
+using Vehicles;
+using HarmonyLib;
+using Verse.AI.Group;
+
+namespace VehicleRaidFramework
+{
+    public static class CrewManager
+    {
+        public static void ReassignCrew(VehiclePawn vehicle)
+        {
+            if (vehicle == null || vehicle.Faction == null || vehicle.Faction.IsPlayer || !vehicle.Spawned) return;
+            if (vehicle.VehicleDef.type == VehicleType.Air) return;
+
+            var handlers = vehicle.handlers;
+            if (handlers == null || handlers.Count == 0) return;
+
+            List<Pawn> consciousPawns = new List<Pawn>();
+            List<Pawn> downedPawns = new List<Pawn>();
+
+            foreach (var h in handlers)
+            {
+                foreach (Pawn p in h.thingOwner)
+                {
+                    if (p == null || p.Dead) continue;
+                    if (p.Downed) downedPawns.Add(p);
+                    else consciousPawns.Add(p);
+                }
+            }
+
+            foreach (var h in handlers)
+            {
+                h.thingOwner.Clear();
+            }
+
+            var movementHandlers = handlers.Where(h => h?.role != null && (h.role.HandlingTypes & HandlingType.Movement) != 0).ToList();
+            var turretHandlers = handlers.Where(h => h?.role != null && (h.role.HandlingTypes & HandlingType.Turret) != 0).ToList();
+            var otherHandlers = handlers.Where(h => h != null && !movementHandlers.Contains(h) && !turretHandlers.Contains(h)).ToList();
+
+            DistributePawns(consciousPawns, movementHandlers);
+            DistributePawns(consciousPawns, turretHandlers);
+            DistributePawns(consciousPawns, otherHandlers);
+
+            DistributePawns(downedPawns, otherHandlers);
+            DistributePawns(downedPawns, turretHandlers);
+            DistributePawns(downedPawns, movementHandlers);
+
+            SyncLord(vehicle);
+            CheckRetreat(vehicle);
+        }
+
+        public static void SyncLord(VehiclePawn vehicle)
+        {
+            if (vehicle == null || vehicle.Faction == null || vehicle.Faction.IsPlayer || !vehicle.Spawned) return;
+
+            Lord vLord = vehicle.GetLord();
+            foreach (Pawn occupant in vehicle.AllPawnsAboard)
+            {
+                if (occupant.Dead || occupant.Downed) continue;
+                Lord pLord = occupant.GetLord();
+                if (pLord != null && pLord != vLord && pLord.LordJob is LordJob_VehicleRaid)
+                {
+                    if (vLord != null) vLord.RemovePawn(vehicle);
+                    pLord.AddPawn(vehicle);
+                    return;
+                }
+            }
+        }
+
+        private static void DistributePawns(List<Pawn> pawns, List<VehicleRoleHandler> targetHandlers)
+        {
+            foreach (var h in targetHandlers)
+            {
+                if (h?.role == null) continue;
+                while (pawns.Count > 0 && h.thingOwner.Count < h.role.Slots)
+                {
+                    Pawn p = pawns[0];
+                    if (p != null) h.thingOwner.TryAdd(p);
+                    pawns.RemoveAt(0);
+                }
+            }
+        }
+
+        public static void CheckRetreat(VehiclePawn vehicle)
+        {
+            if (vehicle == null || vehicle.Faction == null || vehicle.Faction.IsPlayer || !vehicle.Spawned) return;
+            if (vehicle.VehicleDef.type == VehicleType.Air) return;
+            if (vehicle.mindState?.duty?.def == null) return;
+
+            if (vehicle.mindState.duty.def.defName == "VRF_VehicleExitMap" || vehicle.mindState.duty.def == DutyDefOf.ExitMapBest) return;
+
+            Lord lord = vehicle.GetLord();
+            if (lord?.LordJob is LordJob_VehicleTrade || lord?.LordJob is LordJob_HelicopterTrade) return;
+
+            int totalConscious = vehicle.AllPawnsAboard.Count(p => !p.Dead && !p.Downed);
+            if (totalConscious == 1 && HasOperationalDriver(vehicle))
+            {
+                bool hasPrioritySlots = vehicle.handlers.Any(h => h.role != null && (h.role.HandlingTypes & (HandlingType.Movement | HandlingType.Turret)) != 0 && h.thingOwner.Count < h.role.Slots);
+                
+                if (hasPrioritySlots && (AnyFriendlyInfantryNearby(vehicle) || IsAnyPawnBoarding(vehicle)))
+                {
+                    return;
+                }
+
+                bool isDesignedForMore = vehicle.handlers.Any(h => h.role != null && (h.role.HandlingTypes & HandlingType.Movement) == 0 && h.role.Slots > 0);
+                if (isDesignedForMore)
+                {
+                    TriggerRetreat(vehicle, "MessageVRF_VehicleRetreating");
+                    return;
+                }
+            }
+
+            if (IsOutOfAmmo(vehicle))
+            {
+                TriggerRetreat(vehicle, "MessageVRF_VehicleRetreatingNoAmmo");
+                return;
+            }
+        }
+
+        private static void TriggerRetreat(VehiclePawn vehicle, string messageKey)
+        {
+            vehicle.mindState.duty = new PawnDuty(DefDatabase<DutyDef>.GetNamedSilentFail("VRF_VehicleExitMap") ?? DutyDefOf.ExitMapBest);
+            Messages.Message(messageKey.Translate(vehicle.LabelShort), vehicle, MessageTypeDefOf.NeutralEvent);
+        }
+
+
+
+
+
+
+
+        public static bool IsOutOfAmmo(VehiclePawn vehicle)
+        {
+            CompVehicleTurrets turretComp = vehicle.CompVehicleTurrets;
+            if (turretComp == null) return false;
+
+            bool hasAnyAmmoTurret = false;
+
+            foreach (VehicleTurret turret in turretComp.Turrets)
+            {
+
+                if (turret.def.ammunition == null) continue;
+
+                hasAnyAmmoTurret = true;
+
+                if (turret.shellCount > 0) return false;
+
+                foreach (Thing item in vehicle.inventory.innerContainer)
+                {
+                    if (turret.def.ammunition.Allows(item.def))
+                    {
+
+
+                        if (item.stackCount >= turret.def.chargePerAmmoCount)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+
+            return hasAnyAmmoTurret;
+        }
+
+        private static Pawn FindCandidateInHandlers(IEnumerable<VehicleRoleHandler> handlers)
+        {
+            foreach (var h in handlers)
+            {
+                foreach (Pawn p in h.thingOwner)
+                {
+                    if (p != null && !p.Dead && !p.Downed) return p;
+                }
+            }
+            return null;
+        }
+
+        private static void SwapSeat(VehiclePawn vehicle, Pawn pawn, VehicleRoleHandler targetHandler)
+        {
+            foreach (var h in vehicle.handlers)
+            {
+                if (h.thingOwner.Contains(pawn))
+                {
+                    h.thingOwner.Remove(pawn);
+                    break;
+                }
+            }
+            targetHandler.thingOwner.TryAdd(pawn);
+        }
+
+        public static bool CanMove(VehiclePawn vehicle)
+        {
+
+            if (!vehicle.CanMove) return false;
+            if (!vehicle.HasEnoughOperators) return false;
+
+            var fuelComp = vehicle.GetComp<CompFueledTravel>();
+            if (fuelComp != null && fuelComp.Fuel <= 0 && !HasFuelInInventory(vehicle)) return false;
+
+            if (!HasOperationalDriver(vehicle)) return false;
+
+            return true;
+        }
+
+        public static bool HasOperationalDriver(VehiclePawn vehicle)
+        {
+            if (vehicle.handlers == null) return false;
+            foreach (var h in vehicle.handlers)
+            {
+                if (h.role != null && (h.role.HandlingTypes & HandlingType.Movement) != 0)
+                {
+
+                    foreach (var thing in h.thingOwner)
+                    {
+                        if (thing is Pawn p && !p.Dead && !p.Downed) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private static bool HasFuelInInventory(VehiclePawn vehicle)
+        {
+            return CompFueledTravel.AllFuelFromInventory(vehicle).Any();
+        }
+
+        public static void CheckAbandonment(VehiclePawn vehicle)
+        {
+            if (!vehicle.AllPawnsAboard.Any()) return;
+
+            Lord lord = vehicle.GetLord();
+            if (lord?.LordJob is LordJob_VehicleTrade || lord?.LordJob is LordJob_HelicopterTrade) return;
+
+            if (!CanMove(vehicle))
+            {
+                if (IsCriticallyFailing(vehicle))
+                {
+                    AbandonVehicle(vehicle);
+                }
+            }
+        }
+
+        private static bool IsCriticallyFailing(VehiclePawn vehicle)
+        {
+
+            if (!vehicle.CanMove) return true;
+
+            if (!HasOperationalDriver(vehicle)) return true;
+
+            var fuelComp = vehicle.GetComp<CompFueledTravel>();
+            if (fuelComp != null && fuelComp.Fuel <= 0 && !HasFuelInInventory(vehicle))
+            {
+                return true; 
+            }
+
+            return false;
+        }
+
+        public static bool HasFunctionalEngine(VehiclePawn vehicle)
+        {
+            if (vehicle.statHandler?.components == null) return true;
+            
+            foreach (var part in vehicle.statHandler.components)
+            {
+                if (part.Health <= 0 && part.props?.tags != null && (part.props.tags.Contains("engine") || part.props.tags.Contains("fuel_tank") || part.props.tags.Contains("transmission")))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public static void AbandonVehicle(VehiclePawn vehicle)
+        {
+            if (!vehicle.Spawned || vehicle.Dead) return;
+
+            var crew = vehicle.AllPawnsAboard.ToList();
+            if (!crew.Any()) return;
+
+            Messages.Message("MessageVRF_VehicleAbandoned".Translate(vehicle.LabelShort), vehicle, MessageTypeDefOf.NegativeEvent);
+
+            for (int i = crew.Count - 1; i >= 0; i--)
+            {
+                Pawn p = crew[i];
+                vehicle.DisembarkPawn(p);
+
+                if (p.Dead || p.Downed || !p.Spawned) continue;
+                p.mindState.duty = new PawnDuty(DutyDefOf.AssaultColony);
+                p.jobs.StopAll();
+            }
+        }
+
+        public static bool AnyFriendlyInfantryNearby(VehiclePawn vehicle)
+        {
+            if (!vehicle.Spawned || vehicle.Map == null) return false;
+
+            float radius = 50f;
+            float radiusSq = radius * radius;
+            
+            foreach (Pawn p in vehicle.Map.mapPawns.AllPawnsSpawned)
+            {
+                if (p != vehicle && p.Faction == vehicle.Faction && !p.Dead && !p.Downed && p.Spawned && !(p is VehiclePawn))
+                {
+                    if (p.Position.DistanceToSquared(vehicle.Position) <= radiusSq)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static bool IsAnyPawnBoarding(VehiclePawn vehicle)
+        {
+            if (vehicle.Map == null) return false;
+            var mapPawns = vehicle.Map.mapPawns.AllPawnsSpawned;
+            for (int i = 0; i < mapPawns.Count; i++)
+            {
+                Pawn p = mapPawns[i];
+                if (p.CurJob != null && p.CurJob.def.defName == "Board" && p.CurJob.targetA.Thing == vehicle)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(Pawn), nameof(Pawn.Kill))]
+    public static class Patch_CrewCasualty
+    {
+        public static void Postfix(Pawn __instance)
+        {
+            if (__instance.ParentHolder is VehicleRoleHandler handler)
+            {
+                if (handler.vehicle?.VehicleDef?.type == VehicleType.Air) return;
+                CrewManager.ReassignCrew(handler.vehicle);
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(Pawn_HealthTracker), "MakeDowned")]
+    public static class Patch_CrewDowned
+    {
+        public static void Postfix(Pawn_HealthTracker __instance)
+        {
+            Pawn pawn = Traverse.Create(__instance).Field("pawn").GetValue<Pawn>();
+            if (pawn?.ParentHolder is VehicleRoleHandler handler)
+            {
+                if (handler.vehicle?.VehicleDef?.type == VehicleType.Air) return;
+                CrewManager.ReassignCrew(handler.vehicle);
+            }
+        }
+    }
+}
+
+
+

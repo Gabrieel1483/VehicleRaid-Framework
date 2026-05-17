@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<LanguageData>
-	<CVN_OnCooldown>On cooldown. It will be available in {0}.</CVN_OnCooldown>
-	<CVN_CannotLand>Cannot land. This runway is impossible to use.</CVN_CannotLand>
-	<CVN_CannotTakeoff>Cannot takeoff. This runway is impossible to use.</CVN_CannotTakeoff>
-	<CVN_CannotTakeoffInSpace>Cannot takeoff in space.</CVN_CannotTakeoffInSpace>
-    <CVN_CannotLandOnImpassableTiles>Cannot land on impassable tiles.</CVN_CannotLandOnImpassableTiles>
-</LanguageData>

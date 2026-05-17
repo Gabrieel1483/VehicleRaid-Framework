@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<LanguageData>
-	
-	<VRF_LetterLabel_VehicleRaid>Armored Vehicle Raid</VRF_LetterLabel_VehicleRaid>
-	<VRF_LetterText_VehicleRaid>An armored vehicle has been spotted approaching your colony! A {0} Bulldog tank with a full crew is heading your way. Prepare your defenses!\n\nThe vehicle will attempt to breach walls and destroy everything in its path.</VRF_LetterText_VehicleRaid>
-</LanguageData>
-

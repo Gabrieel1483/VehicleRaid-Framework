@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+	<vehicleStats>
+		<MoveSpeed>4.5</MoveSpeed> Important to change the 0 and remove the lock.
+	</vehicleStats>
+
+
+	<roles>
+		<li>
+			<key>pilot</key> example so that the driver is also a gunner
+			
+			<turretIds>
+				<li>militaryTurret1</li>
+				<li>militaryTurret2</li>
+			</turretIds>
+			
+			<handlingTypes>
+				<li>Movement</li>
+				<li>Turret</li>
+			</handlingTypes>
+		</li>
+	</roles>
+
+
+
+	<comps>
+		<li Class="VehicleRaid.CompProperties_VehicleHover"> the code that controls aerial mode and its animation
+			<maxTicks>600</maxTicks>
+			<hoverMoveSpeed>4.5</hoverMoveSpeed>
+			<maxTicksVertical>400</maxTicksVertical>
+			<maxTicksPropeller>800</maxTicksPropeller>
+			<hoverAltitude>4</hoverAltitude>
+			<hoverShadowOffset>1.5</hoverShadowOffset>
+			<hoverBobAmount>0.22</hoverBobAmount>
+			<hoverBobSpeed>2.0</hoverBobSpeed>
+
+			<rotationCurve Class="SmashTools.BezierCurve">
+				<points>
+					<li>(0, 0)</li>
+					<li>(0.3, 2)</li>
+					<li>(0.5, 3)</li>
+					<li>(0.7, 2)</li>
+					<li>(1, 0)</li>
+				</points>
+			</rotationCurve>
+
+			<rotationVerticalCurve Class="SmashTools.BezierCurve">
+				<points>
+					<li>(0, 0)</li>
+					<li>(0.2, 3)</li>
+					<li>(0.4, 5)</li>
+					<li>(0.6, 4)</li>
+					<li>(0.8, 2)</li>
+					<li>(1, 0)</li>
+				</points>
+			</rotationVerticalCurve>
+
+			<angularVelocityPropeller Class="SmashTools.BezierCurve">
+				<points>
+					<li>0, 0</li>
+					<li>0.3, 0</li>
+					<li>0.5, 30</li>
+					<li>1, 59</li>
+				</points>
+			</angularVelocityPropeller>
+
+			<zPositionVerticalCurve Class="SmashTools.BezierCurve">
+				<points>
+					<li>(0, 0)</li>
+					<li>(0.15, 0)</li>
+					<li>(0.5, 3)</li>
+					<li>(0.85, 4)</li>
+					<li>(1, 4)</li>
+				</points>
+			</zPositionVerticalCurve>
+
+			<xPositionVerticalCurve Class="SmashTools.BezierCurve">
+				<points>
+					<li>(0, 0)</li>
+					<li>(0.5, 0)</li>
+					<li>(1, 0)</li>
+				</points>
+			</xPositionVerticalCurve>
+
+			<shadowAlphaPropellerCurve Class="SmashTools.BezierCurve">
+				<points>
+					<li>(0, 1)</li>
+					<li>(0.3, 0.8)</li>
+					<li>(0.7, 0.5)</li>
+					<li>(1, 0.3)</li>
+				</points>
+			</shadowAlphaPropellerCurve>
+
+			<fleckDataVertical>
+				<def>DustPuff</def>
+				<angle>0~360</angle>
+				<runOutOfStep>false</runOutOfStep>
+				<lockFleckX>false</lockFleckX>
+
+				<airTime>
+					<points>
+						<li>(1, 0.5)</li>
+					</points>
+				</airTime>
+
+				<drawOffset Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0, 3)</li>
+						<li>(0.25, 3)</li>
+						<li>(0.5, 3)</li>
+						<li>(0.75, 4)</li>
+						<li>(0.75, 6)</li>
+					</points>
+				</drawOffset>
+
+				<frequency Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0, 160)</li>
+						<li>(0.25, 160)</li>
+						<li>(0.5, 160)</li>
+						<li>(0.75, 130)</li>
+						<li>(0.75, 0)</li>
+					</points>
+				</frequency>
+
+				<rotationRate>
+					<points>
+						<li>(0, 3)</li>
+						<li>(1, 1)</li>
+					</points>
+				</rotationRate>
+
+				<size Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0, 2.5)</li>
+						<li>(0.25, 1.64)</li>
+						<li>(0.75, 1.56)</li>
+						<li>(1, 1)</li>
+					</points>
+				</size>
+
+				<speed>
+					<points>
+						<li>(0, 6)</li>
+						<li>(1, 3)</li>
+					</points>
+				</speed>
+			</fleckDataVertical>
+
+			<fleckDataPropeller>
+				<def>DustPuff</def>
+				<angle>0~360</angle>
+				<runOutOfStep>false</runOutOfStep>
+				<lockFleckX>false</lockFleckX>
+
+				<airTime>
+					<points>
+						<li>(0, 0.5)</li>
+					</points>
+				</airTime>
+
+				<drawOffset Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0, 2)</li>
+						<li>(0.25, 2)</li>
+						<li>(0.5, 3)</li>
+						<li>(0.75, 3)</li>
+						<li>(1, 3)</li>
+					</points>
+				</drawOffset>
+
+				<frequency Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0.2, 0)</li>
+						<li>(0.25, 20)</li>
+						<li>(0.75, 40)</li>
+						<li>(1, 160)</li>
+					</points>
+				</frequency>
+
+				<rotationRate>
+					<points>
+						<li>(0, 1)</li>
+						<li>(1, 3)</li>
+					</points>
+				</rotationRate>
+
+				<size Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0, 1)</li>
+						<li>(0.25, 1.56)</li>
+						<li>(0.75, 1.64)</li>
+						<li>(1, 2.5)</li>
+					</points>
+				</size>
+
+				<speed>
+					<points>
+						<li>(0, 3)</li>
+						<li>(1, 6)</li>
+					</points>
+				</speed>
+			</fleckDataPropeller>
+		</li>
+
+
+
+		<li Class="Vehicles.CompProperties_VehicleTurrets"> 
+			<turrets>
+				<li>
+					<turretDef>Mosquito_MainTurret</turretDef>
+					<renderProperties>
+						<north>(-1.1, 0)</north>
+					</renderProperties>
+					<gizmoLabel>Military turret</gizmoLabel>
+					<defaultAngleRotated>359</defaultAngleRotated>
+					<angleRestricted>(355, 15)</angleRestricted>
+					<aimPieOffset>(0, -0.35)</aimPieOffset>
+					<key>militaryTurret1</key>
+				</li>
+				<li>
+					<turretDef>Mosquito_MainTurret</turretDef>
+					<renderProperties>
+						<north>(1.1, 0)</north>
+					</renderProperties>
+					<gizmoLabel>Military turret</gizmoLabel>
+					<defaultAngleRotated>359</defaultAngleRotated>
+					<angleRestricted>(345, 5)</angleRestricted>
+					<aimPieOffset>(0, -0.35)</aimPieOffset>
+					<key>militaryTurret2</key>
+				</li>
+			</turrets>
+		</li>
+	</comps>
+

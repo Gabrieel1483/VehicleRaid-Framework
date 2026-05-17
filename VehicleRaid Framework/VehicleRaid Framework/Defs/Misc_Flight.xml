@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<Defs>
-    <FleckDef ParentName="FleckFeedbackBase">
-        <defName>CVN_WaypointMech7</defName>
-        <graphicData>
-            <texPath>Things/projectiles/Proj._EnergyBall</texPath>
-        </graphicData>
-    </FleckDef>
-</Defs>

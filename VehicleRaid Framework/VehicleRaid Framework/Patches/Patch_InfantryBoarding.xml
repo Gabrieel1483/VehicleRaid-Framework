@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+
+	<Operation Class="PatchOperationInsert">
+		<xpath>Defs/DutyDef[defName="DefendBase" or defName="Defend" or defName="AssaultColony" or
+			defName="AssaultThing" or defName="HuntEnemiesIndividual" or defName="Breaching" or
+			defName="Sapper"]/thinkNode/subNodes/li[@Class="JobGiver_TakeCombatEnhancingDrug"]</xpath>
+		<value>
+			<li Class="VehicleRaidFramework.JobGiver_InfantryBoardNearbyVehicle" />
+		</value>
+	</Operation>
+
+</Patch>

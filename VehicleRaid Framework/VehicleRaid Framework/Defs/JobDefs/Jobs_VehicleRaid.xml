@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <JobDef>
+    <defName>VRF_VehicleExitMap</defName>
+    <driverClass>VehicleRaidFramework.JobDriver_VehicleExitMap</driverClass>
+    <reportString>leaving the area.</reportString>
+    <allowOpportunisticPrefix>false</allowOpportunisticPrefix>
+  </JobDef>
+</Defs>
+

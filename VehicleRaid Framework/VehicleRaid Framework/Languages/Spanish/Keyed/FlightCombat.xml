@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LanguageData>
+	<CVN_OnCooldown>En enfriamiento. Estará disponible en {0}.</CVN_OnCooldown>
+	<CVN_CannotLand>No se puede aterrizar. Esta pista es imposible de usar.</CVN_CannotLand>
+	<CVN_CannotTakeoff>No se puede despegar. Esta pista es imposible de usar.</CVN_CannotTakeoff>
+	<CVN_CannotTakeoffInSpace>No se puede despegar en el espacio.</CVN_CannotTakeoffInSpace>
+	<CVN_CannotLandOnImpassableTiles>No se puede aterrizar en casillas infranqueables.</CVN_CannotLandOnImpassableTiles>
+</LanguageData>

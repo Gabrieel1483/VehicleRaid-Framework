@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+	<!-- Duty for vehicles traveling to a trade spot -->
+	<DutyDef>
+		<defName>VRF_VehicleTravelToSpot</defName>
+		<thinkNode Class="ThinkNode_Priority">
+			<subNodes>
+				<li Class="Vehicles.ThinkNode_ConditionalVehicle">
+					<subNodes>
+						<li Class="VehicleRaidFramework.JobGiver_VehicleTravelToSpot" />
+						<li Class="Vehicles.JobGiver_AwaitOrders"/>
+					</subNodes>
+				</li>
+			</subNodes>
+		</thinkNode>
+	</DutyDef>
+
+	<!-- Duty for vehicles parking near the trade spot -->
+	<DutyDef>
+		<defName>VRF_VehicleTradeParking</defName>
+		<thinkNode Class="ThinkNode_Priority">
+			<subNodes>
+				<li Class="Vehicles.ThinkNode_ConditionalVehicle">
+					<subNodes>
+						<li Class="VehicleRaidFramework.JobGiver_VehicleParking" />
+						<li Class="Vehicles.JobGiver_AwaitOrders"/>
+					</subNodes>
+				</li>
+			</subNodes>
+		</thinkNode>
+	</DutyDef>
+
+	<DutyDef>
+		<defName>VRF_HelicopterTakeoff</defName>
+		<thinkNode Class="ThinkNode_Priority">
+			<subNodes>
+				<li Class="Vehicles.ThinkNode_ConditionalVehicle">
+					<subNodes>
+						<li Class="Vehicles.JobGiver_AwaitOrders"/>
+					</subNodes>
+				</li>
+			</subNodes>
+		</thinkNode>
+	</DutyDef>
+
+</Defs>

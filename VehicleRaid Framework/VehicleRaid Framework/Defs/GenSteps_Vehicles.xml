@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <GenStepDef>
+    <defName>VRF_SettlementVehicles</defName>
+    <order>405</order>
+    <genStep Class="VehicleRaidFramework.GenStep_SettlementVehicles" />
+  </GenStepDef>
+
+</Defs>

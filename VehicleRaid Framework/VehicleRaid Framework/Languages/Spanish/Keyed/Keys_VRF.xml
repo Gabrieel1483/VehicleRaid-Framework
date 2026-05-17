@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <VRF_LetterLabel_VehicleRaid>¡Asalto con Vehículos!</VRF_LetterLabel_VehicleRaid>
+  <VRF_LetterText_VehicleRaid>¡Una división blindada de {0} está atacando! Están usando vehículos pesados para romper nuestras defensas.</VRF_LetterText_VehicleRaid>
+  
+  <VRF_LetterLabel_AlliedSupport>Apoyo Blindado Aliado</VRF_LetterLabel_AlliedSupport>
+  <VRF_LetterText_AlliedSupport>¡Una división blindada de {0} ha llegado para apoyarnos! Sus vehículos cazarán a nuestros enemigos.</VRF_LetterText_AlliedSupport>
+  
+  <MessageVRF_VehicleAbandoned>La tripulación ha abandonado {0} porque ya no es operativo.</MessageVRF_VehicleAbandoned>
+  <MessageVRF_VehicleRetreating>{0} se está retirando porque solo queda el conductor.</MessageVRF_VehicleRetreating>
+  <MessageVRF_VehicleRetreatingNoAmmo>{0} se está retirando porque se ha quedado sin munición.</MessageVRF_VehicleRetreatingNoAmmo>
+  <VRF_RequestArmoredTrader>Solicitar convoy comercial blindado (coste: {0} de buena voluntad)</VRF_RequestArmoredTrader>
+  <VRF_RequestAerialTrader>Solicitar comercio aéreo (coste: {0} de buena voluntad)</VRF_RequestAerialTrader>
+  <VRF_ChooseTraderType>Elegir tipo de comerciante:</VRF_ChooseTraderType>
+  <VRF_TraderCargoWeight>Peso de carga del comerciante: {0} / {1} kg</VRF_TraderCargoWeight>
+  <VRF_TraderOverweight>El comerciante no puede llevar tanto peso en sus vehículos.</VRF_TraderOverweight>
+</LanguageData>

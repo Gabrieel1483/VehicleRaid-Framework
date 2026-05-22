@@ -6,6 +6,7 @@ namespace VehicleRaid
 {
     public class CompProperties_VehicleHover : VehicleCompProperties
     {
+        public FlightType flightType = FlightType.Hover;
         public int maxTicks;
         public int maxTicksVertical;
         public int maxTicksPropeller;
@@ -32,6 +33,13 @@ namespace VehicleRaid
 
         public FleckData fleckDataVertical;
         public FleckData fleckDataPropeller;
+
+        public int landingMaxTicks = 600;
+        public BezierCurve landingRotationCurve;
+        public BezierCurve landingForwardCurve;
+        public BezierCurve landingAltitudeCurve;
+
+        public int runwayClearCells = 15;
 
         public CompProperties_VehicleHover()
         {

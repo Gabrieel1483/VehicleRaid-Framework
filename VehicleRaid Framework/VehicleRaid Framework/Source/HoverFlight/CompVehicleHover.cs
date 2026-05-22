@@ -9,6 +9,12 @@ using VehicleRaidFramework;
 
 namespace VehicleRaid
 {
+    public enum FlightType
+    {
+        Hover,
+        Airplane
+    }
+
     public enum HoverState
     {
         Grounded,
@@ -24,6 +30,8 @@ namespace VehicleRaid
         public int ticksInState = 0;
         public float currentAltitude = 0f;
         public float bobbingOffset = 0f;
+
+        public FlightType FlightType => Props.flightType;
 
         public Vector2 realPos;
         public Vector2 targetPos;
@@ -48,6 +56,12 @@ namespace VehicleRaid
         private const int CrashDelayTicks = 180;
         private const int CrashFuelDelayTicks = 240;
         private const int CrashDurationTicks = 90;
+
+        private Vector2 takeoffOrigin;
+        private Vector2 landingOrigin;
+        private Vector2 landingApproachTarget;
+        private bool hasLandingApproach = false;
+        private Rot4 pendingLandingRot = Rot4.North;
 
         public CompProperties_VehicleHover Props => (CompProperties_VehicleHover)props;
 
@@ -89,6 +103,11 @@ namespace VehicleRaid
             Scribe_Values.Look(ref ticksWithoutPilot, "ticksWithoutPilot", 0);
             Scribe_Values.Look(ref ticksWithoutFuel, "ticksWithoutFuel", 0);
             Scribe_Values.Look(ref crashStartAltitude, "crashStartAltitude", 0f);
+            Scribe_Values.Look(ref takeoffOrigin, "takeoffOrigin");
+            Scribe_Values.Look(ref landingOrigin, "landingOrigin");
+            Scribe_Values.Look(ref landingApproachTarget, "landingApproachTarget");
+            Scribe_Values.Look(ref hasLandingApproach, "hasLandingApproach", false);
+            Scribe_Values.Look(ref pendingLandingRot, "pendingLandingRot", Rot4.North);
         }
 
         public override IEnumerable<Gizmo> CompGetGizmosExtra()
@@ -98,12 +117,13 @@ namespace VehicleRaid
 
             if (takeoffCommand == null)
             {
-                takeoffCommand = new Command_Action
+                takeoffCommand = new Vehicles.Command_ActionHighlighter
                 {
                     defaultLabel = "Despegar",
                     defaultDesc = "El vehículo despega y gana altura.",
                     icon = ContentFinder<Texture2D>.Get("UI/Commands/LaunchShip"),
-                    action = StartTakeoff
+                    action = StartTakeoff,
+                    mouseOver = DrawTakeoffRunway
                 };
             }
 
@@ -183,12 +203,16 @@ namespace VehicleRaid
                 takeoffCommand.Disabled = false;
                 takeoffCommand.disabledReason = null;
                 
+                var launcher = Vehicle.GetComp<Vehicles.CompVehicleLauncher>();
+                
                 if (!Vehicle.Drafted)
                     takeoffCommand.Disable("El motor debe estar encendido para despegar.");
                 else if (!Vehicle.HasEnoughOperators || Vehicle.PawnCountToOperateLeft > 0)
                     takeoffCommand.Disable("VF_NotEnoughToOperate".Translate());
                 else if (Ext_Vehicles.IsRoofed(Vehicle.Position, Vehicle.Map))
                     takeoffCommand.Disable("CommandLaunchGroupFailUnderRoof".Translate());
+                else if (FlightType == FlightType.Airplane && launcher != null && launcher.launchProtocol != null && launcher.launchProtocol.LaunchRestricted)
+                    takeoffCommand.Disable(launcher.launchProtocol.FailLaunchMessage);
                 
                 yield return takeoffCommand;
             }
@@ -196,9 +220,32 @@ namespace VehicleRaid
             {
                 landCommand.Disabled = false;
                 landCommand.disabledReason = null;
-                IntVec3 landPos = new IntVec3(Mathf.RoundToInt(realPos.x - 0.5f), 0, Mathf.RoundToInt(realPos.y - 0.5f));
-                if (landPos.InBounds(Vehicle.Map) && Ext_Vehicles.IsRoofed(landPos, Vehicle.Map))
-                    landCommand.Disable("CommandLaunchGroupFailUnderRoof".Translate());
+
+                if (FlightType == FlightType.Airplane)
+                {
+                    if (hasLandingApproach)
+                    {
+                        landCommand.defaultLabel = "Cancelar aterrizaje";
+                        landCommand.defaultDesc = "Cancela la aproximación de aterrizaje.";
+                        landCommand.action = () => { hasLandingApproach = false; };
+                    }
+                    else
+                    {
+                        landCommand.defaultLabel = "Aterrizar";
+                        landCommand.defaultDesc = "Selecciona una zona de aterrizaje. El avión necesita una pista despejada en la dirección de aproximación.";
+                        landCommand.action = StartLanding;
+                    }
+                }
+                else
+                {
+                    landCommand.defaultLabel = "Aterrizar";
+                    landCommand.defaultDesc = "El vehículo desciende y aterriza.";
+                    landCommand.action = StartLanding;
+                    IntVec3 landPos = new IntVec3(Mathf.RoundToInt(realPos.x - 0.5f), 0, Mathf.RoundToInt(realPos.y - 0.5f));
+                    if (landPos.InBounds(Vehicle.Map) && Ext_Vehicles.IsRoofed(landPos, Vehicle.Map))
+                        landCommand.Disable("CommandLaunchGroupFailUnderRoof".Translate());
+                }
+
                 yield return landCommand;
 
                 if (isAttackingTarget || isFacingTarget)
@@ -282,6 +329,7 @@ namespace VehicleRaid
             attackTarget = LocalTargetInfo.Invalid;
             isFacingTarget = false;
             facingTarget = LocalTargetInfo.Invalid;
+            hasLandingApproach = false;
         }
 
         private void AssignTurretTargets()
@@ -323,6 +371,12 @@ namespace VehicleRaid
 
         public void SetTarget(Vector3 worldPos)
         {
+            if (Vehicle.Map != null)
+            {
+                float margin = MapEdgeMargin;
+                worldPos.x = Mathf.Clamp(worldPos.x, margin, Vehicle.Map.Size.x - margin);
+                worldPos.z = Mathf.Clamp(worldPos.z, margin, Vehicle.Map.Size.z - margin);
+            }
             targetPos = new Vector2(worldPos.x, worldPos.z);
             hasTarget = true;
         }
@@ -333,10 +387,16 @@ namespace VehicleRaid
 
             ticksInState = Props.maxTicks;
             State = HoverState.Hovering;
-            currentAltitude = Props.hoverBobAmount;
+            currentAltitude = (FlightType == FlightType.Airplane) ? Props.hoverAltitude : Props.hoverBobAmount;
             bobbingOffset = currentAltitude;
             realPos = new Vector2(Vehicle.Position.x + 0.5f, Vehicle.Position.z + 0.5f);
             targetPos = realPos;
+            takeoffOrigin = realPos;
+            if (FlightType == FlightType.Airplane)
+            {
+                flyAngle = Vehicle.Rotation.AsAngle;
+                currentFlyAngle = flyAngle;
+            }
             UpdatePropellerSpeed();
         }
 
@@ -344,22 +404,60 @@ namespace VehicleRaid
         {
             if (State != HoverState.Grounded && State != HoverState.Landing) return;
 
+            Vehicle.pather.StopDead();
+
             if (State == HoverState.Grounded)
             {
                 ticksInState = 0;
                 realPos = new Vector2(Vehicle.Position.x + 0.5f, Vehicle.Position.z + 0.5f);
                 targetPos = realPos;
+                
+                if (FlightType == FlightType.Airplane)
+                {
+                    flyAngle = Vehicle.Rotation.AsAngle;
+                    currentFlyAngle = flyAngle;
+                    takeoffOrigin = realPos;
+                }
             }
             else
-                ticksInState = Mathf.Max(0, Props.maxTicks - ticksInState);
+            {
+                if (FlightType == FlightType.Airplane)
+                {
+                    int landMaxTicks = Props.landingMaxTicks > 0 ? Props.landingMaxTicks : Props.maxTicks;
+                    float tLanding = Mathf.Clamp01((float)ticksInState / landMaxTicks);
+                    float tTakeoff = 1f - tLanding;
+                    ticksInState = Mathf.RoundToInt(tTakeoff * Props.maxTicks);
+                    takeoffOrigin = realPos - new Vector2(
+                        Mathf.Sin(flyAngle * Mathf.Deg2Rad),
+                        Mathf.Cos(flyAngle * Mathf.Deg2Rad)) * (Props.xPositionCurve != null ? Props.xPositionCurve.Evaluate(tTakeoff) : 0f);
+                }
+                else
+                    ticksInState = Mathf.Max(0, Props.maxTicks - ticksInState);
+            }
 
             State = HoverState.TakingOff;
             UpdatePropellerSpeed();
         }
 
+        private void DrawTakeoffRunway()
+        {
+            if (!Vehicle.Spawned || FlightType != FlightType.Airplane) return;
+            var launcher = Vehicle.GetComp<Vehicles.CompVehicleLauncher>();
+            if (launcher != null && launcher.launchProtocol != null && launcher.launchProtocol.LaunchProperties.restriction != null)
+            {
+                launcher.launchProtocol.LaunchProperties.restriction.DrawRestrictionsTargeter(Vehicle, Vehicle.Map, Vehicle.Position, Vehicle.Rotation);
+            }
+        }
+
         private void StartLanding()
         {
             if (State != HoverState.Hovering && State != HoverState.TakingOff) return;
+
+            if (FlightType == FlightType.Airplane)
+            {
+                StartLandingTargeting();
+                return;
+            }
 
             CancelTarget();
             hasTarget = false;
@@ -373,6 +471,45 @@ namespace VehicleRaid
                 ticksInState = Mathf.Max(0, Props.maxTicks - ticksInState);
 
             State = HoverState.Landing;
+        }
+
+        private void StartLandingTargeting()
+        {
+            var launcher = Vehicle.GetComp<Vehicles.CompVehicleLauncher>();
+            LandingTargeter.Instance.BeginTargeting(
+                Vehicle,
+                Vehicle.Map,
+                (target, rot) => ExecuteAirplaneLanding(target.Cell, rot),
+                null,
+                null,
+                null,
+                null,
+                true,
+                false
+            );
+        }
+
+        private void ExecuteAirplaneLanding(IntVec3 landCell, Rot4 rot)
+        {
+            Vehicle.pather.StopDead();
+            CancelTarget();
+            hasTarget = false;
+            moveSpeed = 0f;
+
+            flyAngle = rot.AsAngle;
+            currentFlyAngle = flyAngle;
+
+            landingOrigin = new Vector2(landCell.x + 0.5f, landCell.z + 0.5f);
+
+            float initialForward = Props.landingForwardCurve != null ? Props.landingForwardCurve.Evaluate(0f) : 0f;
+            float rad = flyAngle * Mathf.Deg2Rad;
+            Vector2 forward = new Vector2(Mathf.Sin(rad), Mathf.Cos(rad));
+            landingApproachTarget = landingOrigin - forward * initialForward;
+
+            pendingLandingRot = rot;
+            hasLandingApproach = true;
+
+            ApplyRotationFromAngle(flyAngle);
         }
 
         private void SnapRotationToCardinal()
@@ -401,6 +538,9 @@ namespace VehicleRaid
             base.CompTick();
 
             if (!Vehicle.Spawned || Vehicle.Map == null) return;
+
+            if (IsAirborne)
+                ClampRealPosToMap();
 
             if (State == HoverState.Grounded &&
                 Vehicle.Faction != null &&
@@ -473,19 +613,33 @@ namespace VehicleRaid
                 TickMotes();
                 UpdatePropellerSpeed();
 
-                if (ticksInState >= Props.maxTicks)
+                int landMaxTicks = (FlightType == FlightType.Airplane && Props.landingMaxTicks > 0)
+                    ? Props.landingMaxTicks
+                    : Props.maxTicks;
+
+                if (ticksInState >= landMaxTicks)
                 {
                     ticksInState = 0;
                     currentAltitude = 0f;
                     State = HoverState.Grounded;
+                    Vehicle.Angle = 0f;
+                    Vehicle.Transform.rotation = 0f;
                     SnapPositionToGrid();
                     UpdatePropellerSpeed();
                 }
             }
             else if (State == HoverState.Hovering)
             {
-                bobbingOffset = Props.hoverBobAmount * Mathf.Sin(Find.TickManager.TicksGame * Props.hoverBobSpeed * Mathf.PI / 60f);
-                currentAltitude = bobbingOffset;
+                if (FlightType == FlightType.Hover)
+                {
+                    bobbingOffset = Props.hoverBobAmount * Mathf.Sin(Find.TickManager.TicksGame * Props.hoverBobSpeed * Mathf.PI / 60f);
+                    currentAltitude = bobbingOffset;
+                }
+                else
+                {
+                    currentAltitude = Props.hoverAltitude;
+                }
+
                 UpdatePropellerSpeed();
                 TickFacingTarget();
                 TickHoverMovement();
@@ -500,6 +654,7 @@ namespace VehicleRaid
                 float speed = Props.hoverMoveSpeed * 0.4f / 60f;
                 float rad = currentFlyAngle * Mathf.Deg2Rad;
                 realPos += new Vector2(Mathf.Sin(rad), Mathf.Cos(rad)) * speed * (1f - t * 0.5f);
+                ClampRealPosToMap();
                 UpdateGridPosition();
 
                 currentAltitude = Mathf.Lerp(crashStartAltitude, -0.3f, t);
@@ -513,6 +668,20 @@ namespace VehicleRaid
 
                 if (ticksInState >= CrashDurationTicks)
                     CrashImpact();
+            }
+
+            if (IsAirborne && Vehicle.Spawned && Vehicle.Map != null)
+            {
+                ClampRealPosToMap();
+                IntVec3 pos = Vehicle.Position;
+                int margin = Mathf.CeilToInt(MapEdgeMargin);
+                if (pos.x < margin || pos.z < margin || pos.x >= Vehicle.Map.Size.x - margin || pos.z >= Vehicle.Map.Size.z - margin)
+                {
+                    int sx = Mathf.Clamp(pos.x, margin, Vehicle.Map.Size.x - margin - 1);
+                    int sz = Mathf.Clamp(pos.z, margin, Vehicle.Map.Size.z - margin - 1);
+                    Vehicle.Position = new IntVec3(sx, 0, sz);
+                    realPos = new Vector2(sx + 0.5f, sz + 0.5f);
+                }
             }
         }
 
@@ -589,10 +758,68 @@ namespace VehicleRaid
 
         private void TickHoverMovement()
         {
+            float speed = Props.hoverMoveSpeed / 60f;
+            moveSpeed = speed;
+
+            if (FlightType == FlightType.Airplane)
+            {
+                if (hasLandingApproach)
+                {
+                    Vector2 diff = landingApproachTarget - realPos;
+                    float approachDist = diff.magnitude;
+
+                    float approachAngle = Mathf.Atan2(diff.x, diff.y) * Mathf.Rad2Deg;
+                    RotateTowardsAngle(approachAngle);
+
+                    float rad = currentFlyAngle * Mathf.Deg2Rad;
+                    realPos += new Vector2(Mathf.Sin(rad), Mathf.Cos(rad)) * speed;
+                    ClampRealPosToMap();
+                    UpdateGridPosition();
+
+                    float angleDiff = Mathf.Abs(Mathf.DeltaAngle(currentFlyAngle, pendingLandingRot.AsAngle));
+                    if (approachDist < speed * 3f && angleDiff < 20f)
+                    {
+                        hasLandingApproach = false;
+                        realPos = landingApproachTarget;
+
+                        flyAngle = pendingLandingRot.AsAngle;
+                        currentFlyAngle = flyAngle;
+                        Vehicle.Angle = 0f;
+                        Vehicle.Transform.rotation = 0f;
+                        Vehicle.FullRotation = (Rot8)pendingLandingRot;
+                        Vehicle.Rotation = pendingLandingRot;
+
+                        ticksInState = 0;
+                        State = HoverState.Landing;
+                    }
+                    return;
+                }
+
+                if (hasTarget)
+                {
+                    Vector2 diff = targetPos - realPos;
+                    if (diff.magnitude > 0.5f)
+                    {
+                        float targetAngle = Mathf.Atan2(diff.x, diff.y) * Mathf.Rad2Deg;
+                        RotateTowardsAngle(targetAngle);
+                    }
+                    else
+                    {
+                        hasTarget = false;
+                    }
+                }
+
+                float rad2 = currentFlyAngle * Mathf.Deg2Rad;
+                realPos += new Vector2(Mathf.Sin(rad2), Mathf.Cos(rad2)) * speed;
+                ClampRealPosToMap();
+                UpdateGridPosition();
+                return;
+            }
+
             if (!hasTarget) return;
 
-            Vector2 diff = targetPos - realPos;
-            float dist = diff.magnitude;
+            Vector2 hoverDiff = targetPos - realPos;
+            float dist = hoverDiff.magnitude;
 
             if (dist < 0.1f)
             {
@@ -602,26 +829,25 @@ namespace VehicleRaid
                 return;
             }
 
-            float speed = Props.hoverMoveSpeed / 60f;
-            moveSpeed = speed;
-
             if (!isFacingTarget)
             {
-                flyAngle = Mathf.Atan2(diff.x, diff.y) * Mathf.Rad2Deg;
+                flyAngle = Mathf.Atan2(hoverDiff.x, hoverDiff.y) * Mathf.Rad2Deg;
                 RotateTowardsAngle(flyAngle);
             }
 
             if (dist <= speed)
             {
                 realPos = targetPos;
+                ClampRealPosToMap();
                 hasTarget = false;
                 moveSpeed = 0f;
                 SnapPositionToGrid();
             }
             else
             {
-                Vector2 dir = diff.normalized;
+                Vector2 dir = hoverDiff.normalized;
                 realPos += dir * speed;
+                ClampRealPosToMap();
                 UpdateGridPosition();
             }
         }
@@ -684,26 +910,124 @@ namespace VehicleRaid
         {
             if (!Vehicle.Spawned || Vehicle.Map == null) return;
             IntVec3 newPos = new IntVec3(Mathf.RoundToInt(realPos.x - 0.5f), 0, Mathf.RoundToInt(realPos.y - 0.5f));
-            if (newPos.InBounds(Vehicle.Map) && newPos != Vehicle.Position)
+            newPos.x = Mathf.Clamp(newPos.x, 0, Vehicle.Map.Size.x - 1);
+            newPos.z = Mathf.Clamp(newPos.z, 0, Vehicle.Map.Size.z - 1);
+            if (newPos != Vehicle.Position)
                 Vehicle.Position = newPos;
         }
 
         private void UpdateGridPosition()
         {
             if (!Vehicle.Spawned || Vehicle.Map == null) return;
-            IntVec3 newPos = new IntVec3((int)realPos.x, 0, (int)realPos.y);
-            if (newPos.InBounds(Vehicle.Map) && newPos != Vehicle.Position)
+            ClampRealPosToMap();
+            int margin = Mathf.CeilToInt(MapEdgeMargin);
+            int x = Mathf.Clamp((int)realPos.x, margin, Vehicle.Map.Size.x - margin - 1);
+            int z = Mathf.Clamp((int)realPos.y, margin, Vehicle.Map.Size.z - margin - 1);
+            IntVec3 newPos = new IntVec3(x, 0, z);
+            if (newPos != Vehicle.Position)
                 Vehicle.Position = newPos;
         }
 
         private void UpdateAltitude()
         {
+            if (FlightType == FlightType.Airplane)
+            {
+                UpdateAltitudeAirplane();
+                return;
+            }
+
             float t = Mathf.Clamp01((float)ticksInState / Props.maxTicks);
             if (State == HoverState.Landing)
                 t = 1f - t;
             float targetBob = Props.hoverBobAmount * Mathf.Sin(Find.TickManager.TicksGame * Props.hoverBobSpeed * Mathf.PI / 60f);
             currentAltitude = Mathf.Lerp(0f, targetBob, t);
             bobbingOffset = currentAltitude;
+        }
+
+        private void UpdateAltitudeAirplane()
+        {
+            if (State == HoverState.TakingOff)
+            {
+                float t = Mathf.Clamp01((float)ticksInState / Props.maxTicks);
+
+                float forwardDist = Props.xPositionCurve != null ? Props.xPositionCurve.Evaluate(t) : 0f;
+                float altitude    = Props.zPositionCurve  != null ? Props.zPositionCurve.Evaluate(t)  : 0f;
+                float pitch       = Props.rotationCurve   != null ? Props.rotationCurve.Evaluate(t)   : 0f;
+
+                float rad = flyAngle * Mathf.Deg2Rad;
+                Vector2 forward = new Vector2(Mathf.Sin(rad), Mathf.Cos(rad));
+                realPos = takeoffOrigin + forward * forwardDist;
+                ClampRealPosToMap();
+                UpdateGridPosition();
+
+                currentAltitude = altitude;
+                bobbingOffset   = currentAltitude;
+
+                ApplyRotationFromAngle(flyAngle);
+                
+                int flipSign = (Vehicle.Rotation == Rot4.West) ? -1 : 1;
+                if (Vehicle.Rotation == Rot4.North || Vehicle.Rotation == Rot4.South) flipSign = 0;
+                Vehicle.Transform.rotation += pitch * flipSign;
+            }
+            else if (State == HoverState.Landing)
+            {
+                int landMaxTicks = Props.landingMaxTicks > 0 ? Props.landingMaxTicks : Props.maxTicks;
+                float t = Mathf.Clamp01((float)ticksInState / landMaxTicks);
+
+                float forwardDist = Props.landingForwardCurve   != null ? Props.landingForwardCurve.Evaluate(t)   : 0f;
+                float altitude    = Props.landingAltitudeCurve  != null ? Props.landingAltitudeCurve.Evaluate(t)  : 0f;
+                float pitch       = Props.landingRotationCurve  != null ? Props.landingRotationCurve.Evaluate(t)  : 0f;
+
+                float rad = flyAngle * Mathf.Deg2Rad;
+                Vector2 forward = new Vector2(Mathf.Sin(rad), Mathf.Cos(rad));
+                realPos = landingOrigin - forward * forwardDist;
+                ClampRealPosToMap();
+                UpdateGridPosition();
+
+                currentAltitude = altitude;
+                bobbingOffset   = currentAltitude;
+
+                ApplyRotationFromAngle(flyAngle);
+                
+                int flipSign = (Vehicle.Rotation == Rot4.West) ? -1 : 1;
+                if (Vehicle.Rotation == Rot4.North || Vehicle.Rotation == Rot4.South) flipSign = 0;
+                Vehicle.Transform.rotation += pitch * flipSign;
+            }
+        }
+
+        private float MapEdgeMargin
+        {
+            get
+            {
+                if (Vehicle == null || Vehicle.def == null) return 2.5f;
+                int maxDim = Mathf.Max(Vehicle.def.size.x, Vehicle.def.size.z);
+                return (maxDim / 2f) + 1.5f;
+            }
+        }
+
+        private void ClampRealPosToMap()
+        {
+            if (Vehicle.Map == null) return;
+            float margin = MapEdgeMargin;
+            float minX = margin;
+            float maxX = Vehicle.Map.Size.x - margin;
+            float minZ = margin;
+            float maxZ = Vehicle.Map.Size.z - margin;
+
+            bool hitEdge = realPos.x < minX || realPos.x > maxX || realPos.y < minZ || realPos.y > maxZ;
+
+            realPos.x = Mathf.Clamp(realPos.x, minX, maxX);
+            realPos.y = Mathf.Clamp(realPos.y, minZ, maxZ);
+
+            if (hitEdge && State == HoverState.Hovering && FlightType == FlightType.Airplane)
+            {
+                Vector2 center = new Vector2(Vehicle.Map.Size.x * 0.5f, Vehicle.Map.Size.z * 0.5f);
+                Vector2 toCenter = (center - realPos).normalized;
+                float turnAngle = Mathf.Atan2(toCenter.x, toCenter.y) * Mathf.Rad2Deg;
+                flyAngle = turnAngle;
+                currentFlyAngle = turnAngle;
+                ApplyRotationFromAngle(currentFlyAngle);
+            }
         }
 
         private void UpdatePropellerSpeed()
@@ -798,10 +1122,6 @@ namespace VehicleRaid
             Vehicle.Transform.rotation = 0f;
             Vehicle.ignition.Drafted = false;
             SnapPositionToGrid();
-            UpdatePropellerSpeed();
-
-            if (Vehicle.Faction == Faction.OfPlayer)
-                Messages.Message("VRF_VehicleCrashed".Translate(Vehicle.LabelShort), Vehicle, MessageTypeDefOf.NegativeEvent);
         }
 
         private void TryThrowFleck(FleckData fleckData, float t)

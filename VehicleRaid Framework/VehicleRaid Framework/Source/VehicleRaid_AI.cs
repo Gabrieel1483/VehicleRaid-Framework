@@ -266,7 +266,7 @@ namespace VehicleRaidFramework
             vehicle.mindState.enemyTarget = enemy;
             float maxRange = vehicle.CompVehicleTurrets?.MaxRange ?? 60f;
             float minRange = vehicle.CompVehicleTurrets?.MinRange ?? 0f;
-            float idealRange = Mathf.Clamp(maxRange * 0.5f, minRange + 2f, maxRange - 2f);
+            float idealRange = Mathf.Clamp(maxRange * 0.7f, minRange + 3f, maxRange - 2f);
             int vehicleWidth = (vehicle.Rotation == Rot4.North || vehicle.Rotation == Rot4.South) ? vehicle.def.size.x : vehicle.def.size.z;
 
             if (vehicle.CanReachVehicle(new LocalTargetInfo(enemy.Position), PathEndMode.Touch, Danger.Deadly, TraverseMode.NoPassClosedDoors))
@@ -323,13 +323,54 @@ namespace VehicleRaidFramework
         private Job HandleDirectAssault(VehiclePawn vehicle, Thing enemy, float idealRange, float maxRange, float minRange)
         {
             float dist = vehicle.Position.DistanceTo(enemy.Position);
-            
+            bool restricted = TryGetRestrictedTurretAngle(vehicle, enemy, out float idealTurretAngle);
+
+            if (dist < minRange + 1f && minRange > 0f)
+            {
+                IntVec3 retreatCell = FindRetreatCell(vehicle, enemy, idealRange, maxRange, minRange, restricted, idealTurretAngle);
+                if (retreatCell.IsValid)
+                {
+                    Job retreatJob = JobMaker.MakeJob(JobDefOf.Goto, retreatCell);
+                    retreatJob.expiryInterval = 1000;
+                    retreatJob.checkOverrideOnExpire = true;
+                    return retreatJob;
+                }
+                IntVec3 fallback = FindPositionAtIdealRange(vehicle, enemy, idealRange, maxRange, minRange, restricted, idealTurretAngle, true);
+                if (fallback.IsValid)
+                {
+                    Job fallbackJob = JobMaker.MakeJob(JobDefOf.Goto, fallback);
+                    fallbackJob.expiryInterval = 1500;
+                    fallbackJob.checkOverrideOnExpire = true;
+                    return fallbackJob;
+                }
+                return JobMaker.MakeJob(JobDefOf.Wait_Combat, 120, true);
+            }
+
             if (dist >= minRange && dist <= maxRange && GenSight.LineOfSight(vehicle.Position, enemy.Position, vehicle.Map))
             {
+                if (restricted)
+                {
+                    var turretComp = vehicle.CompVehicleTurrets;
+                    bool canFire, blocked;
+                    CheckTurretAngles(turretComp, enemy, out canFire, out blocked);
+
+                    if (blocked && !canFire)
+                    {
+                        IntVec3 alignedCell = FindTurretAlignedCell(vehicle, enemy, maxRange, minRange, idealTurretAngle);
+                        if (alignedCell.IsValid)
+                        {
+                            Job maneuverJob = JobMaker.MakeJob(JobDefOf.Goto, alignedCell);
+                            maneuverJob.expiryInterval = 800;
+                            maneuverJob.checkOverrideOnExpire = true;
+                            return maneuverJob;
+                        }
+                    }
+                }
+
                 return JobMaker.MakeJob(JobDefOf.Wait_Combat, 250, true);
             }
 
-            IntVec3 targetPos = FindPositionAtIdealRange(vehicle, enemy, idealRange, maxRange, minRange);
+            IntVec3 targetPos = FindPositionAtIdealRange(vehicle, enemy, idealRange, maxRange, minRange, restricted, idealTurretAngle);
             if (targetPos.IsValid && targetPos != vehicle.Position)
             {
                 Job gotoJob = JobMaker.MakeJob(JobDefOf.Goto, targetPos);
@@ -351,19 +392,47 @@ namespace VehicleRaidFramework
             }
 
             float breachRange = Rand.Range(Mathf.Max(minRange + 5f, 10f), maxRange - 4f);
-            
+            bool restricted = TryGetRestrictedTurretAngle(vehicle, wall, out float idealTurretAngle);
+
             float dist = vehicle.Position.DistanceTo(wall.Position);
-            if (dist < minRange + 1f)
+            if (dist < minRange + 1f && minRange > 0f)
             {
-                IntVec3 retreatPos = FindPositionAtIdealRange(vehicle, wall, breachRange, maxRange, minRange);
-                if (retreatPos.IsValid) return JobMaker.MakeJob(JobDefOf.Goto, new LocalTargetInfo(retreatPos), 500, true);
+                IntVec3 retreatCell = FindRetreatCell(vehicle, wall, breachRange, maxRange, minRange, restricted, idealTurretAngle);
+                if (retreatCell.IsValid)
+                {
+                    Job retreatJob = JobMaker.MakeJob(JobDefOf.Goto, retreatCell);
+                    retreatJob.expiryInterval = 1000;
+                    retreatJob.checkOverrideOnExpire = true;
+                    return retreatJob;
+                }
+                IntVec3 fallback = FindPositionAtIdealRange(vehicle, wall, breachRange, maxRange, minRange, restricted, idealTurretAngle, true);
+                if (fallback.IsValid) return JobMaker.MakeJob(JobDefOf.Goto, new LocalTargetInfo(fallback), 500, true);
             }
             if (dist >= minRange && dist <= maxRange && GenSight.LineOfSight(vehicle.Position, wall.Position, vehicle.Map))
             {
+                if (restricted)
+                {
+                    var turretComp = vehicle.CompVehicleTurrets;
+                    bool canFire, blocked;
+                    CheckTurretAngles(turretComp, wall, out canFire, out blocked);
+
+                    if (blocked && !canFire)
+                    {
+                        IntVec3 alignedCell = FindTurretAlignedCell(vehicle, wall, maxRange, minRange, idealTurretAngle);
+                        if (alignedCell.IsValid)
+                        {
+                            Job maneuverJob = JobMaker.MakeJob(JobDefOf.Goto, alignedCell);
+                            maneuverJob.expiryInterval = 800;
+                            maneuverJob.checkOverrideOnExpire = true;
+                            return maneuverJob;
+                        }
+                    }
+                }
+
                 vehicle.mindState.breachingTarget = new BreachingTargetData(wall, vehicle.Position);
                 return JobMaker.MakeJob(JobDefOf.Wait_Combat, 120, true);
             }
-            IntVec3 approachPos = FindPositionAtIdealRange(vehicle, wall, breachRange, maxRange, minRange);
+            IntVec3 approachPos = FindPositionAtIdealRange(vehicle, wall, breachRange, maxRange, minRange, restricted, idealTurretAngle);
             if (approachPos.IsValid) return JobMaker.MakeJob(JobDefOf.Goto, new LocalTargetInfo(approachPos), 500, true);
 
             return JobMaker.MakeJob(JobDefOf.Wait_Combat, 120, true);
@@ -391,11 +460,13 @@ namespace VehicleRaidFramework
             return closest;
         }
 
-        private IntVec3 FindPositionAtIdealRange(VehiclePawn vehicle, Thing target, float idealRange, float maxRange, float minRange)
+        private IntVec3 FindPositionAtIdealRange(VehiclePawn vehicle, Thing target, float idealRange, float maxRange, float minRange, bool hasRestrictedTurrets = false, float idealTurretAngle = 0f, bool isRetreating = false)
         {
             Map map = vehicle.Map;
             var allyRects = new List<CellRect>();
             var allyDestinations = new List<KeyValuePair<IntVec3, int>>();
+            float distVehicleToTarget = vehicle.Position.DistanceTo(target.Position);
+            bool tooClose = distVehicleToTarget < minRange + 1f;
 
             foreach (Pawn p in map.mapPawns.AllPawnsSpawned)
             {
@@ -414,12 +485,13 @@ namespace VehicleRaidFramework
             var candidates = new List<KeyValuePair<IntVec3, float>>();
             int cellsChecked = 0;
 
-            float scanRadius = Mathf.Min(idealRange + 5f, maxRange);
-            scanRadius = Mathf.Min(scanRadius, 60f);
+            float scanRadius = (tooClose || isRetreating) ? Mathf.Min(maxRange + 5f, 70f) : Mathf.Min(idealRange + 5f, maxRange);
+            scanRadius = Mathf.Min(scanRadius, 70f);
+            int maxCells = (tooClose || isRetreating) ? 800 : 500;
 
             foreach (IntVec3 cell in GenRadial.RadialCellsAround(target.Position, scanRadius, true))
             {
-                if (cellsChecked++ > 500) break;
+                if (cellsChecked++ > maxCells) break;
 
                 float distToTarget = cell.DistanceTo(target.Position);
                 if (distToTarget < minRange + 1f || !cell.Standable(map) || !GenSight.LineOfSight(cell, target.Position, map)) continue;
@@ -443,16 +515,37 @@ namespace VehicleRaidFramework
                 }
                 if (destinationTaken) continue;
 
-                float score = Mathf.Abs(distToTarget - idealRange) * 3f + cell.DistanceTo(vehicle.Position) + Rand.Range(0f, 15f);
+                float rangeScore = Mathf.Abs(distToTarget - idealRange) * 3f;
+                float travelScore = tooClose ? cell.DistanceTo(vehicle.Position) * 0.3f : cell.DistanceTo(vehicle.Position);
+                float score = rangeScore + travelScore + Rand.Range(0f, 10f);
+
+                if (tooClose && distToTarget >= minRange + 2f)
+                    score -= 15f;
+
+                if (hasRestrictedTurrets)
+                {
+                    Vector3 approachDir = (cell.ToVector3Shifted() - vehicle.Position.ToVector3Shifted());
+                    Vector3 cellToTarget = (target.DrawPos - cell.ToVector3Shifted());
+                    approachDir.y = 0f;
+                    cellToTarget.y = 0f;
+                    if (approachDir.sqrMagnitude > 1f && cellToTarget.sqrMagnitude > 1f)
+                    {
+                        Vector3 idealFacingDir = Quaternion.Euler(0f, -idealTurretAngle, 0f) * cellToTarget;
+                        float alignment = Vector3.Dot(approachDir.normalized, idealFacingDir.normalized);
+                        score += (1f - alignment) * 20f;
+                    }
+                }
+
                 candidates.Add(new KeyValuePair<IntVec3, float>(cell, score));
             }
 
             candidates.Sort((a, b) => a.Value.CompareTo(b.Value));
 
             int pathChecks = 0;
+            int maxPathChecks = (tooClose || isRetreating) ? 8 : 5;
             foreach (var kvp in candidates)
             {
-                if (pathChecks++ >= 5) break;
+                if (pathChecks++ >= maxPathChecks) break;
                 if (vehicle.CanReachVehicle(new LocalTargetInfo(kvp.Key), PathEndMode.OnCell, Danger.Deadly, TraverseMode.NoPassClosedDoors))
                 {
                     return kvp.Key;
@@ -523,6 +616,152 @@ namespace VehicleRaidFramework
                 }
             }
             return false;
+        }
+
+        private void CheckTurretAngles(CompVehicleTurrets turretComp, Thing target, out bool canFire, out bool blocked)
+        {
+            canFire = false;
+            blocked = false;
+            if (turretComp == null || turretComp.Turrets == null) return;
+
+            foreach (var turret in turretComp.Turrets)
+            {
+                if (!turret.InRange(new LocalTargetInfo(target))) continue;
+
+                if (turret.AngleBetween(target.DrawPos))
+                    canFire = true;
+                else
+                    blocked = true;
+            }
+        }
+
+        private bool TryGetRestrictedTurretAngle(VehiclePawn vehicle, Thing target, out float angle)
+        {
+            angle = 0f;
+            var turretComp = vehicle.CompVehicleTurrets;
+            if (turretComp == null || turretComp.Turrets == null) return false;
+            foreach (var turret in turretComp.Turrets)
+            {
+                if (turret.angleRestricted != Vector2.zero && turret.InRange(new LocalTargetInfo(target)))
+                {
+                    float min = turret.angleRestricted.x;
+                    float max = turret.angleRestricted.y;
+                    if (min > max)
+                    {
+                        float diff = (360f - min) + max;
+                        angle = (min + diff / 2f) % 360f;
+                    }
+                    else
+                    {
+                        angle = (min + max) / 2f;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private IntVec3 FindTurretAlignedCell(VehiclePawn vehicle, Thing target, float maxRange, float minRange, float idealTurretAngle)
+        {
+            Map map = vehicle.Map;
+            Vector3 toTarget = (target.DrawPos - vehicle.DrawPos).normalized;
+            Vector3 idealFacing = Quaternion.Euler(0f, -idealTurretAngle, 0f) * toTarget;
+            
+            float currentDist = vehicle.Position.DistanceTo(target.Position);
+            bool tooClose = currentDist < minRange + 1f;
+
+            Vector3 baseDir = tooClose ? -idealFacing : idealFacing;
+
+            for (int i = 0; i < 16; i++)
+            {
+                float offsetAngle = (i == 0) ? 0f : ((i % 2 == 1) ? 1f : -1f) * ((i + 1) / 2) * 22.5f;
+                Vector3 moveDir = Quaternion.Euler(0f, offsetAngle, 0f) * baseDir;
+
+                for (float d = 3f; d <= 12f; d += 1.5f)
+                {
+                    IntVec3 candidate = vehicle.Position + (moveDir * d).ToIntVec3();
+                    if (!candidate.InBounds(map) || !candidate.Standable(map)) continue;
+                    if (candidate == vehicle.Position) continue;
+
+                    float distToTarget = candidate.DistanceTo(target.Position);
+                    if (distToTarget < minRange + 1f || distToTarget > maxRange) continue;
+
+                    bool vehicleBlocked = false;
+                    foreach (Thing t in candidate.GetThingList(map))
+                    {
+                        if (t is VehiclePawn v && v != vehicle) { vehicleBlocked = true; break; }
+                    }
+                    if (vehicleBlocked) continue;
+
+                    if (vehicle.CanReachVehicle(new LocalTargetInfo(candidate), PathEndMode.OnCell, Danger.Deadly, TraverseMode.NoPassClosedDoors))
+                        return candidate;
+                }
+            }
+
+            return IntVec3.Invalid;
+        }
+
+        private IntVec3 FindRetreatCell(VehiclePawn vehicle, Thing threat, float idealRange, float maxRange, float minRange, bool hasRestrictedTurrets, float idealTurretAngle)
+        {
+            Map map = vehicle.Map;
+            Vector3 awayFromThreat = (vehicle.DrawPos - threat.DrawPos).normalized;
+
+            var candidates = new List<KeyValuePair<IntVec3, float>>();
+
+            for (int i = 0; i < 16; i++)
+            {
+                float offsetAngle = (i == 0) ? 0f : ((i % 2 == 1) ? 1f : -1f) * ((i + 1) / 2) * 22.5f;
+                Vector3 moveDir = Quaternion.Euler(0f, offsetAngle, 0f) * awayFromThreat;
+
+                for (float d = 3f; d <= maxRange; d += 2f)
+                {
+                    IntVec3 candidate = vehicle.Position + (moveDir * d).ToIntVec3();
+                    if (!candidate.InBounds(map) || !candidate.Standable(map)) continue;
+                    if (candidate == vehicle.Position) continue;
+
+                    float distToThreat = candidate.DistanceTo(threat.Position);
+                    if (distToThreat < minRange + 1f || distToThreat > maxRange) continue;
+
+                    bool vehicleBlocked = false;
+                    foreach (Thing t in candidate.GetThingList(map))
+                    {
+                        if (t is VehiclePawn v && v != vehicle) { vehicleBlocked = true; break; }
+                    }
+                    if (vehicleBlocked) continue;
+
+                    float rangeScore = Mathf.Abs(distToThreat - idealRange);
+                    float angleScore = Mathf.Abs(offsetAngle) * 0.1f;
+                    float score = rangeScore + angleScore + Rand.Range(0f, 3f);
+
+                    if (hasRestrictedTurrets)
+                    {
+                        Vector3 approachDir = (candidate.ToVector3Shifted() - vehicle.Position.ToVector3Shifted());
+                        Vector3 cellToThreat = (threat.DrawPos - candidate.ToVector3Shifted());
+                        approachDir.y = 0f;
+                        cellToThreat.y = 0f;
+                        if (approachDir.sqrMagnitude > 1f && cellToThreat.sqrMagnitude > 1f)
+                        {
+                            Vector3 idealFacingDir = Quaternion.Euler(0f, -idealTurretAngle, 0f) * cellToThreat;
+                            float alignment = Vector3.Dot(approachDir.normalized, idealFacingDir.normalized);
+                            score += (1f - alignment) * 15f;
+                        }
+                    }
+
+                    candidates.Add(new KeyValuePair<IntVec3, float>(candidate, score));
+                }
+            }
+
+            candidates.Sort((a, b) => a.Value.CompareTo(b.Value));
+
+            int pathChecks = 0;
+            foreach (var kvp in candidates)
+            {
+                if (pathChecks++ >= 6) break;
+                if (vehicle.CanReachVehicle(new LocalTargetInfo(kvp.Key), PathEndMode.OnCell, Danger.Deadly, TraverseMode.NoPassClosedDoors))
+                    return kvp.Key;
+            }
+
+            return IntVec3.Invalid;
         }
     }
 

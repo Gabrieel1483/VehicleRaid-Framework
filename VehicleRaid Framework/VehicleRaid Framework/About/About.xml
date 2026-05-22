@@ -14,5 +14,11 @@
 			<downloadUrl>https://github.com/SmashPhil/Vehicle-Framework</downloadUrl>
 		</li>
 	</modDependencies>
-
+	<loadAfter>
+		<li>SmashPhil.VehicleFramework</li>
+  	</loadAfter>
+	<loadBefore>
+		<li>rimthunder.core</li>
+		<li>oskarpotocki.vanillavehiclesexpanded</li>
+  	</loadBefore>
 </ModMetaData>

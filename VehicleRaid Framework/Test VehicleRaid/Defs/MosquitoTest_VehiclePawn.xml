@@ -397,7 +397,7 @@
 			</li>
 			<li Class="VehicleRaid.CompProperties_VehicleHover">
 				<maxTicks>600</maxTicks>
-				<hoverMoveSpeed>4.5</hoverMoveSpeed>
+				<hoverMoveSpeed>8.5</hoverMoveSpeed>
 				<maxTicksVertical>400</maxTicksVertical>
 				<maxTicksPropeller>800</maxTicksPropeller>
 				<hoverAltitude>4</hoverAltitude>

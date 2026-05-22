@@ -381,9 +381,9 @@ namespace VehicleRaid
             if (!__instance.Spawned || __instance.Map == null) return;
             var hoverComp = __instance.GetComp<CompVehicleHover>();
             if (hoverComp == null) return;
-            if (hoverComp.State == HoverState.Hovering)
+            if (hoverComp.State != HoverState.Grounded)
                 __result = false;
-            else if (hoverComp.State == HoverState.Grounded)
+            else if (hoverComp.FlightType != FlightType.Airplane)
                 __result = false;
         }
     }

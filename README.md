@@ -35,6 +35,7 @@ To make your helicopter fly, simply add the code found in VehicleRaid-Framework/
 
 
 For airplane-type vehicles, use the following code below, and if you want to add turrets, it's the same as in MosquitoHover.xml.
+
 			<li Class="VehicleRaid.CompProperties_VehicleHover">
 				<flightType>Airplane</flightType>
 				<maxTicks>300</maxTicks>

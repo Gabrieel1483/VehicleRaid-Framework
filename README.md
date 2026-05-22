@@ -32,3 +32,76 @@ Now for aerial vehicles: only use helicopter-type vehicles, as I am unsure what 
 Once a merchant vehicle incident has been created, it will appear in the communications console to be requested or it will generate randomly; it will only appear once the colony becomes an ally with the faction you have set.
 
 To make your helicopter fly, simply add the code found in VehicleRaid-Framework/VehicleRaid Framework MosquitoHover.xml
+
+
+For airplane-type vehicles, use the following code below, and if you want to add turrets, it's the same as in MosquitoHover.xml.
+			<li Class="VehicleRaid.CompProperties_VehicleHover">
+				<flightType>Airplane</flightType>
+				<maxTicks>300</maxTicks>
+				<maxTicksVertical>300</maxTicksVertical>
+				<maxTicksPropeller>300</maxTicksPropeller>
+				<hoverAltitude>0.5</hoverAltitude>
+				<hoverMoveSpeed>15</hoverMoveSpeed>
+				<hoverRotationSpeed>60</hoverRotationSpeed>
+				<hoverShadowOffset>1.5</hoverShadowOffset>
+				<shadowAlphaPropellerCurve Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0, 0)</li>
+						<li>(0.2, 0.4)</li>
+						<li>(0.5, 0.6)</li>
+						<li>(1, 0.6)</li>
+					</points>
+				</shadowAlphaPropellerCurve>
+
+				<xPositionCurve Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0, 0)</li>
+						<li>(0.4, 6)</li>
+						<li>(0.7, 16)</li>
+						<li>(1, 30)</li>
+					</points>
+				</xPositionCurve>
+				<zPositionCurve Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0, 0)</li>
+						<li>(0.6, 0)</li>
+						<li>(0.8, 0.2)</li>
+						<li>(1, 0.5)</li>
+					</points>
+				</zPositionCurve>
+				<rotationCurve Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0, 0)</li>
+						<li>(0.7, 0)</li>
+						<li>(0.9, -15)</li>
+						<li>(1, 0)</li>
+					</points>
+				</rotationCurve>
+
+				<runwayClearCells>30</runwayClearCells>
+				<landingMaxTicks>600</landingMaxTicks>
+				<landingForwardCurve Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0, 30)</li>
+						<li>(0.4, 20)</li>
+						<li>(0.7, 8)</li>
+						<li>(1, 0)</li>
+					</points>
+				</landingForwardCurve>
+				<landingAltitudeCurve Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0, 0.5)</li>
+						<li>(0.3, 0.2)</li>
+						<li>(0.4, 0)</li>
+						<li>(1, 0)</li>
+					</points>
+				</landingAltitudeCurve>
+				<landingRotationCurve Class="SmashTools.BezierCurve">
+					<points>
+						<li>(0, 0)</li>
+						<li>(0.2, -10)</li>
+						<li>(0.4, 0)</li>
+						<li>(1, 0)</li>
+					</points>
+				</landingRotationCurve>
+			</li>

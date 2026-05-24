@@ -41,6 +41,26 @@
 				<spawnVehicle>true</spawnVehicle>
 				<pawnFollowVehicle>true</pawnFollowVehicle>
 
+				<!-- 
+				<colorConfig>
+				<mode>Fixed</mode>
+				<colorOne>(0.2, 0.2, 0.8)</colorOne>
+				<colorTwo>(0.1, 0.1, 0.5)</colorTwo>
+				<colorThree>(0.9, 0.9, 0.9)</colorThree>
+				<pattern>Tiger</pattern>
+				</colorConfig>
+				-->
+
+
+				<colorConfig>
+				<mode>Faction</mode>
+				<pattern>Woodland</pattern>
+				</colorConfig>
+
+
+
+
+
 				<!-- Optional: define specific pawn kinds per role.
 				     If left empty the framework generates crew automatically.
 				     Count is capped to the vehicle's slot limit for each role. -->

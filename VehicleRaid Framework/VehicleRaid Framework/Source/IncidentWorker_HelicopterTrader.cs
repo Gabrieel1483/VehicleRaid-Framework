@@ -51,6 +51,9 @@ namespace VehicleRaidFramework
             if (heli == null) return false;
             heli.kindDef = vehicleKind;
 
+            if (heliExt?.colorConfig != null)
+                VehicleRaidUtility.ApplyColorConfig(heli, heliExt.colorConfig, faction);
+
             bool traderAdded = false;
             foreach (var r in heli.VehicleDef.properties.roles)
             {

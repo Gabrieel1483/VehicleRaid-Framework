@@ -61,6 +61,8 @@ namespace VehicleRaid
         private Vector2 landingOrigin;
         private Vector2 landingApproachTarget;
         private bool hasLandingApproach = false;
+        private bool engineNotificationSent = false;
+        private bool fuelTankNotificationSent = false;
         private Rot4 pendingLandingRot = Rot4.North;
 
         public CompProperties_VehicleHover Props => (CompProperties_VehicleHover)props;
@@ -107,6 +109,8 @@ namespace VehicleRaid
             Scribe_Values.Look(ref landingOrigin, "landingOrigin");
             Scribe_Values.Look(ref landingApproachTarget, "landingApproachTarget");
             Scribe_Values.Look(ref hasLandingApproach, "hasLandingApproach", false);
+            Scribe_Values.Look(ref engineNotificationSent, "engineNotificationSent", false);
+            Scribe_Values.Look(ref fuelTankNotificationSent, "fuelTankNotificationSent", false);
             Scribe_Values.Look(ref pendingLandingRot, "pendingLandingRot", Rot4.North);
         }
 
@@ -542,18 +546,67 @@ namespace VehicleRaid
             if (IsAirborne)
                 ClampRealPosToMap();
 
-            if (State == HoverState.Grounded &&
-                Vehicle.Faction != null &&
-                !Vehicle.Faction.IsPlayer &&
-                Vehicle.IsHashIntervalTick(180))
+            if (State == HoverState.Grounded)
             {
-                if (Patch_VehicleNPCOnOff.ShouldVehicleBeOn(Vehicle))
-                    ActivateHoverNPC();
+                if (Vehicle.IsHashIntervalTick(250))
+                {
+                    if (engineNotificationSent || fuelTankNotificationSent)
+                    {
+                        bool eBroken = false;
+                        bool fBroken = false;
+                        if (Vehicle.statHandler?.components != null)
+                        {
+                            foreach (var part in Vehicle.statHandler.components)
+                            {
+                                if (part.Health <= 0)
+                                {
+                                    if (part.props?.key == "Engine" || (part.props?.tags != null && part.props.tags.Contains("engine"))) eBroken = true;
+                                    else if (part.props?.key == "Chemtank" || part.props?.key == "FuelTank" || (part.props?.tags != null && part.props.tags.Contains("fuel_tank"))) fBroken = true;
+                                }
+                            }
+                        }
+                        if (!eBroken) engineNotificationSent = false;
+                        if (!fBroken) fuelTankNotificationSent = false;
+                    }
+                }
+
+                if (Vehicle.Faction != null &&
+                    !Vehicle.Faction.IsPlayer &&
+                    Vehicle.IsHashIntervalTick(180))
+                {
+                    if (Patch_VehicleNPCOnOff.ShouldVehicleBeOn(Vehicle))
+                        ActivateHoverNPC();
+                }
             }
 
             if (IsAirborne && State != HoverState.Crashing)
             {
-                if (!Vehicle.HasEnoughOperators)
+                bool engineBroken = false;
+                bool fuelTankBroken = false;
+                if (Vehicle.statHandler?.components != null)
+                {
+                    foreach (var part in Vehicle.statHandler.components)
+                    {
+                        if (part.Health <= 0)
+                        {
+                            if (part.props?.key == "Engine" || (part.props?.tags != null && part.props.tags.Contains("engine"))) engineBroken = true;
+                            else if (part.props?.key == "Chemtank" || part.props?.key == "FuelTank" || (part.props?.tags != null && part.props.tags.Contains("fuel_tank"))) fuelTankBroken = true;
+                        }
+                    }
+                }
+
+                if (engineBroken && !engineNotificationSent && Vehicle.Faction == Faction.OfPlayer)
+                {
+                    Messages.Message(Vehicle.LabelShort + " se le ha roto el motor.", Vehicle, MessageTypeDefOf.NegativeEvent);
+                    engineNotificationSent = true;
+                }
+                if (fuelTankBroken && !fuelTankNotificationSent && Vehicle.Faction == Faction.OfPlayer)
+                {
+                    Messages.Message(Vehicle.LabelShort + " se le ha roto el tanque de combustible.", Vehicle, MessageTypeDefOf.NegativeEvent);
+                    fuelTankNotificationSent = true;
+                }
+
+                if (!Vehicle.HasEnoughOperators || engineBroken)
                 {
                     ticksWithoutPilot++;
                     if (ticksWithoutPilot % 30 == 0 && Vehicle.Spawned)

@@ -84,6 +84,9 @@ namespace VehicleRaidFramework
                 VehiclePawn vehicle = VehicleSpawner.GenerateVehicle(vehicleDef, faction);
                 if (vehicle == null) return;
 
+                if (entry.colorConfig != null)
+                    VehicleRaidUtility.ApplyColorConfig(vehicle, entry.colorConfig, faction);
+
                 GenSpawn.Spawn(vehicle, cell, map);
 
                 PawnKindDef crewKind = faction.def.basicMemberKind ?? faction.def.pawnGroupMakers.SelectMany(x => x.options).Select(x => x.kind).FirstOrDefault(x => x.RaceProps.Humanlike) ?? PawnKindDefOf.AncientSoldier;

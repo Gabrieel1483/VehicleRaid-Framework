@@ -10,6 +10,24 @@
 				<vehicleKind>VVE_Bulldog_NPC_Kind</vehicleKind>
 				<!-- <forceCount>0</forceCount>  -->
 				<weight>30</weight>
+
+				<!--
+				<colorConfig>
+					<mode>Fixed</mode>
+					<colorOne>(0.2, 0.2, 0.8)</colorOne>
+					<colorTwo>(0.1, 0.1, 0.5)</colorTwo>
+					<colorThree>(0.9, 0.9, 0.9)</colorThree>
+					<pattern>Tiger</pattern>
+				</colorConfig>
+				-->
+
+
+				<colorConfig>
+					<mode>Faction</mode>
+					<pattern>Woodland</pattern>
+				</colorConfig>
+
+
 				<cargoItems>
 					<li><thingDef>Chemfuel</thingDef><count>200</count></li>
 					<li><thingDef>MealSurvivalPack</thingDef><count>10</count></li>

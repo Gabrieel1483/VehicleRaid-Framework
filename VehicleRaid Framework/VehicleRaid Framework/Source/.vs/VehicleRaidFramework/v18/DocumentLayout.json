@@ -1,7 +1,24 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\Programas\\steamapps\\common\\RimWorld\\Mods\\VehicleRaid Framework\\Source\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{F31BE69F-7D27-CDF6-D362-2CE9B13F4E03}|VehicleRaidFramework.csproj|d:\\programas\\steamapps\\common\\rimworld\\mods\\vehicleraid framework\\source\\hoverflight\\hoverflightturretpatches.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F31BE69F-7D27-CDF6-D362-2CE9B13F4E03}|VehicleRaidFramework.csproj|solutionrelative:hoverflight\\hoverflightturretpatches.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F31BE69F-7D27-CDF6-D362-2CE9B13F4E03}|VehicleRaidFramework.csproj|d:\\programas\\steamapps\\common\\rimworld\\mods\\vehicleraid framework\\source\\hoverflight\\hoverflightpatches.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F31BE69F-7D27-CDF6-D362-2CE9B13F4E03}|VehicleRaidFramework.csproj|solutionrelative:hoverflight\\hoverflightpatches.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F31BE69F-7D27-CDF6-D362-2CE9B13F4E03}|VehicleRaidFramework.csproj|d:\\programas\\steamapps\\common\\rimworld\\mods\\vehicleraid framework\\source\\hoverflight\\compvehiclehover.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F31BE69F-7D27-CDF6-D362-2CE9B13F4E03}|VehicleRaidFramework.csproj|solutionrelative:hoverflight\\compvehiclehover.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F31BE69F-7D27-CDF6-D362-2CE9B13F4E03}|VehicleRaidFramework.csproj|d:\\programas\\steamapps\\common\\rimworld\\mods\\vehicleraid framework\\source\\hoverflight\\compproperties_vehiclehover.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F31BE69F-7D27-CDF6-D362-2CE9B13F4E03}|VehicleRaidFramework.csproj|solutionrelative:hoverflight\\compproperties_vehiclehover.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +26,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
@@ -18,6 +35,58 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{40ea2e6b-2121-4bb8-a43e-c83c04b51041}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "HoverFlightTurretPatches.cs",
+              "DocumentMoniker": "D:\\Programas\\steamapps\\common\\RimWorld\\Mods\\VehicleRaid Framework\\Source\\HoverFlight\\HoverFlightTurretPatches.cs",
+              "RelativeDocumentMoniker": "HoverFlight\\HoverFlightTurretPatches.cs",
+              "ToolTip": "D:\\Programas\\steamapps\\common\\RimWorld\\Mods\\VehicleRaid Framework\\Source\\HoverFlight\\HoverFlightTurretPatches.cs",
+              "RelativeToolTip": "HoverFlight\\HoverFlightTurretPatches.cs",
+              "ViewState": "AgIAAD4AAAAAAAAAAAAgwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-22T14:19:40.465Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "HoverFlightPatches.cs",
+              "DocumentMoniker": "D:\\Programas\\steamapps\\common\\RimWorld\\Mods\\VehicleRaid Framework\\Source\\HoverFlight\\HoverFlightPatches.cs",
+              "RelativeDocumentMoniker": "HoverFlight\\HoverFlightPatches.cs",
+              "ToolTip": "D:\\Programas\\steamapps\\common\\RimWorld\\Mods\\VehicleRaid Framework\\Source\\HoverFlight\\HoverFlightPatches.cs",
+              "RelativeToolTip": "HoverFlight\\HoverFlightPatches.cs",
+              "ViewState": "AgIAADUDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-22T14:19:35.45Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "CompVehicleHover.cs",
+              "DocumentMoniker": "D:\\Programas\\steamapps\\common\\RimWorld\\Mods\\VehicleRaid Framework\\Source\\HoverFlight\\CompVehicleHover.cs",
+              "RelativeDocumentMoniker": "HoverFlight\\CompVehicleHover.cs",
+              "ToolTip": "D:\\Programas\\steamapps\\common\\RimWorld\\Mods\\VehicleRaid Framework\\Source\\HoverFlight\\CompVehicleHover.cs",
+              "RelativeToolTip": "HoverFlight\\CompVehicleHover.cs",
+              "ViewState": "AgIAALoEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-22T14:19:24.97Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "CompProperties_VehicleHover.cs",
+              "DocumentMoniker": "D:\\Programas\\steamapps\\common\\RimWorld\\Mods\\VehicleRaid Framework\\Source\\HoverFlight\\CompProperties_VehicleHover.cs",
+              "RelativeDocumentMoniker": "HoverFlight\\CompProperties_VehicleHover.cs",
+              "ToolTip": "D:\\Programas\\steamapps\\common\\RimWorld\\Mods\\VehicleRaid Framework\\Source\\HoverFlight\\CompProperties_VehicleHover.cs",
+              "RelativeToolTip": "HoverFlight\\CompProperties_VehicleHover.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-22T14:19:13.318Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Bookmark",

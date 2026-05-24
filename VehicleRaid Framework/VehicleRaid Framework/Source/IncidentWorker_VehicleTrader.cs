@@ -194,6 +194,9 @@ string label = "LetterLabelTraderCaravanArrival".Translate(faction.Name, traderK
             VehiclePawn v = VehicleSpawner.GenerateVehicle(opt.kindDef.race as VehicleDef, faction);
             if (v == null) return null;
 
+            if (opt.colorConfig != null)
+                VehicleRaidUtility.ApplyColorConfig(v, opt.colorConfig, faction);
+
             VehicleRole firstRole = v.VehicleDef.properties.roles.Find(x => x.HandlingTypes != HandlingType.None);
             if (firstRole != null)
                 v.TryAddPawn(trader, v.GetHandler(firstRole.key));
@@ -219,6 +222,9 @@ string label = "LetterLabelTraderCaravanArrival".Translate(faction.Name, traderK
         {
             VehiclePawn v = VehicleSpawner.GenerateVehicle(opt.kindDef.race as VehicleDef, faction);
             if (v == null) return null;
+
+            if (opt.colorConfig != null)
+                VehicleRaidUtility.ApplyColorConfig(v, opt.colorConfig, faction);
 
             foreach (var cargo in opt.cargoItems)
             {

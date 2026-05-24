@@ -1,9 +1,26 @@
 using System.Collections.Generic;
+using UnityEngine;
 using Verse;
 using RimWorld;
+using Vehicles;
 
 namespace VehicleRaidFramework
 {
+    public enum VehicleColorMode
+    {
+        Fixed,
+        Faction
+    }
+
+    public class VehicleColorConfig
+    {
+        public VehicleColorMode mode = VehicleColorMode.Fixed;
+        public Color? colorOne = null;
+        public Color? colorTwo = null;
+        public Color? colorThree = null;
+        public PatternDef pattern = null;
+    }
+
     public class CargoItemOption
     {
         public ThingDef thingDef;
@@ -25,6 +42,7 @@ namespace VehicleRaidFramework
         public bool spawnVehicle = true;
         public bool pawnFollowVehicle = false;
         public bool isMortar = false;
+        public VehicleColorConfig colorConfig = null;
         public List<CargoItemOption> cargoItems = new List<CargoItemOption>();
 
         public List<VehicleCrewSlot> driverCrew     = new List<VehicleCrewSlot>();

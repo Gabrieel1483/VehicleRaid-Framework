@@ -179,11 +179,39 @@ namespace VehicleRaidFramework
             return dest;
         }
 
+        public static void ApplyColorConfig(VehiclePawn vehicle, VehicleColorConfig config, Faction faction)
+        {
+            if (config.pattern != null)
+                vehicle.Pattern = config.pattern;
+
+            if (config.mode == VehicleColorMode.Fixed)
+            {
+                if (config.colorOne.HasValue)
+                    vehicle.DrawColor = config.colorOne.Value;
+                if (config.colorTwo.HasValue)
+                    vehicle.DrawColorTwo = config.colorTwo.Value;
+                if (config.colorThree.HasValue)
+                    vehicle.DrawColorThree = config.colorThree.Value;
+            }
+            else if (config.mode == VehicleColorMode.Faction && faction != null)
+            {
+                Color primary = faction.Color;
+                vehicle.DrawColor = primary;
+                vehicle.DrawColorTwo = Color.Lerp(primary, Color.black, 0.4f);
+                vehicle.DrawColorThree = Color.Lerp(primary, Color.white, 0.5f);
+            }
+
+            vehicle.ResetRenderStatus();
+        }
+
         private static VehiclePawn GenerateVehicleWithCrew(VehicleRaidOption option, Faction faction, Map map, VehicleRaidExtension ext, List<Pawn> allPawns)
         {
             VehicleDef vehicleDef = option.kindDef.race as VehicleDef;
             VehiclePawn vehicle = VehicleSpawner.GenerateVehicle(vehicleDef, faction);
             if (vehicle == null) return null;
+
+            if (option.colorConfig != null)
+                ApplyColorConfig(vehicle, option.colorConfig, faction);
 
             LoadFuel(vehicle);
 

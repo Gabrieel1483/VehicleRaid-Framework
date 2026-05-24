@@ -10,6 +10,7 @@ namespace VehicleRaidFramework
         public IntRange count = new IntRange(1, 1);
         public List<CargoItemOption> cargoItems = new List<CargoItemOption>();
         public bool tradeCargo = true;
+        public VehicleColorConfig colorConfig = null;
     }
 
     public class TraderVehicleMapper

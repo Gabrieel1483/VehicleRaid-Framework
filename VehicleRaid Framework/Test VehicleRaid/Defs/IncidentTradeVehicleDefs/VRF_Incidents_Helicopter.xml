@@ -14,6 +14,24 @@
         <vehicleKind>VVE_Cherokee_NPC_Kind</vehicleKind>
         <factionDef>Empire</factionDef>
         <traderKind>Empire_Caravan_TraderGeneral</traderKind>
+
+        <!-- 
+        <colorConfig>
+          <mode>Fixed</mode>
+          <colorOne>(0.2, 0.2, 0.8)</colorOne>
+          <colorTwo>(0.1, 0.1, 0.5)</colorTwo>
+          <colorThree>(0.9, 0.9, 0.9)</colorThree>
+          <pattern>Tiger</pattern>
+        </colorConfig>
+        -->
+
+
+        <colorConfig>
+          <mode>Faction</mode>
+          <pattern>Woodland</pattern>
+        </colorConfig>
+
+
         <!-- Optional: define specific pawn kinds per role.
              The trader always occupies the first driver slot automatically.
              If left empty the framework generates crew automatically.

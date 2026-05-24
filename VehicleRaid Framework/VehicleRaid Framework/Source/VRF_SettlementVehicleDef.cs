@@ -19,6 +19,7 @@ namespace VehicleRaidFramework
         public int forceCount = 0;
         public List<CargoItemOption> cargoItems;
         public bool isMortar = false;
+        public VehicleColorConfig colorConfig = null;
     }
 }
 

@@ -106,3 +106,19 @@ For airplane-type vehicles, use the following code below, and if you want to add
 					</points>
 				</landingRotationCurve>
 			</li>
+
+
+Options have been added to change the color of NPC vehicles.
+First option: This is to set a specific color; "pattern" is optional.
+		<colorConfig>
+		<mode>Fixed</mode>
+		<colorOne>(0.2, 0.2, 0.8)</colorOne>
+		<colorTwo>(0.1, 0.1, 0.5)</colorTwo>
+		<colorThree>(0.9, 0.9, 0.9)</colorThree>
+		<pattern>Tiger</pattern>
+		</colorConfig>
+Second option: This will use the faction icon color; "pattern" is optional.
+		<colorConfig>
+		<mode>Faction</mode>
+		<pattern>Woodland</pattern>
+		</colorConfig>

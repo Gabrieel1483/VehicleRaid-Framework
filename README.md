@@ -110,6 +110,7 @@ For airplane-type vehicles, use the following code below, and if you want to add
 
 Options have been added to change the color of NPC vehicles.
 First option: This is to set a specific color; "pattern" is optional.
+
 		<colorConfig>
 		<mode>Fixed</mode>
 		<colorOne>(0.2, 0.2, 0.8)</colorOne>
@@ -117,7 +118,9 @@ First option: This is to set a specific color; "pattern" is optional.
 		<colorThree>(0.9, 0.9, 0.9)</colorThree>
 		<pattern>Tiger</pattern>
 		</colorConfig>
+		
 Second option: This will use the faction icon color; "pattern" is optional.
+
 		<colorConfig>
 		<mode>Faction</mode>
 		<pattern>Woodland</pattern>

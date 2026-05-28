@@ -269,7 +269,7 @@ namespace VehicleRaid
             foreach (Gizmo gizmo in __result)
             {
                 if (hoverComp != null && hoverComp.IsAirborne && gizmo is Command_Toggle toggle && toggle.isActive())
-                    ((Gizmo)toggle).Disable("No se puede apagar el motor mientras el vehículo está en vuelo.");
+                    ((Gizmo)toggle).Disable("VRF_HoverCannotTurnOffEngine".Translate());
                 yield return gizmo;
             }
         }

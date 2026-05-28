@@ -123,8 +123,8 @@ namespace VehicleRaid
             {
                 takeoffCommand = new Vehicles.Command_ActionHighlighter
                 {
-                    defaultLabel = "Despegar",
-                    defaultDesc = "El vehículo despega y gana altura.",
+                    defaultLabel = "VRF_HoverTakeoff".Translate(),
+                    defaultDesc = "VRF_HoverTakeoffDesc".Translate(),
                     icon = ContentFinder<Texture2D>.Get("UI/Commands/LaunchShip"),
                     action = StartTakeoff,
                     mouseOver = DrawTakeoffRunway
@@ -135,8 +135,8 @@ namespace VehicleRaid
             {
                 landCommand = new Command_Action
                 {
-                    defaultLabel = "Aterrizar",
-                    defaultDesc = "El vehículo desciende y aterriza.",
+                    defaultLabel = "VRF_HoverLand".Translate(),
+                    defaultDesc = "VRF_HoverLandDesc".Translate(),
                     icon = ContentFinder<Texture2D>.Get("UI/Designators/Cancel"),
                     action = StartLanding
                 };
@@ -146,8 +146,8 @@ namespace VehicleRaid
             {
                 faceTargetCommand = new Command_Action
                 {
-                    defaultLabel = "Mirar objetivo",
-                    defaultDesc = "El vehículo apuntará frontalmente hacia el objetivo seleccionado.",
+                    defaultLabel = "VRF_HoverFaceTarget".Translate(),
+                    defaultDesc = "VRF_HoverFaceTargetDesc".Translate(),
                     icon = ContentFinder<Texture2D>.Get("UI/Commands/Attack"),
                     action = StartFaceTarget
                 };
@@ -157,8 +157,8 @@ namespace VehicleRaid
             {
                 attackTargetCommand = new Command_Action
                 {
-                    defaultLabel = "Atacar objetivo",
-                    defaultDesc = "El vehículo apuntará frontalmente hacia el objetivo y las torretas lo atacarán automáticamente.",
+                    defaultLabel = "VRF_HoverAttackTarget".Translate(),
+                    defaultDesc = "VRF_HoverAttackTargetDesc".Translate(),
                     icon = ContentFinder<Texture2D>.Get("UI/Commands/Attack"),
                     action = StartAttackTarget,
                     hotKey = KeyBindingDefOf.Misc1
@@ -169,8 +169,8 @@ namespace VehicleRaid
             {
                 cancelTargetCommand = new Command_Action
                 {
-                    defaultLabel = "Cancelar objetivo",
-                    defaultDesc = "Cancela el objetivo actual.",
+                    defaultLabel = "VRF_HoverCancelTarget".Translate(),
+                    defaultDesc = "VRF_HoverCancelTargetDesc".Translate(),
                     icon = ContentFinder<Texture2D>.Get("UI/Designators/Cancel"),
                     action = CancelTarget
                 };
@@ -210,7 +210,7 @@ namespace VehicleRaid
                 var launcher = Vehicle.GetComp<Vehicles.CompVehicleLauncher>();
                 
                 if (!Vehicle.Drafted)
-                    takeoffCommand.Disable("El motor debe estar encendido para despegar.");
+                    takeoffCommand.Disable("VRF_HoverEngineOff".Translate());
                 else if (!Vehicle.HasEnoughOperators || Vehicle.PawnCountToOperateLeft > 0)
                     takeoffCommand.Disable("VF_NotEnoughToOperate".Translate());
                 else if (Ext_Vehicles.IsRoofed(Vehicle.Position, Vehicle.Map))
@@ -229,21 +229,21 @@ namespace VehicleRaid
                 {
                     if (hasLandingApproach)
                     {
-                        landCommand.defaultLabel = "Cancelar aterrizaje";
-                        landCommand.defaultDesc = "Cancela la aproximación de aterrizaje.";
+                        landCommand.defaultLabel = "VRF_HoverCancelLanding".Translate();
+                        landCommand.defaultDesc = "VRF_HoverCancelLandingDesc".Translate();
                         landCommand.action = () => { hasLandingApproach = false; };
                     }
                     else
                     {
-                        landCommand.defaultLabel = "Aterrizar";
-                        landCommand.defaultDesc = "Selecciona una zona de aterrizaje. El avión necesita una pista despejada en la dirección de aproximación.";
+                        landCommand.defaultLabel = "VRF_HoverLand".Translate();
+                        landCommand.defaultDesc = "VRF_HoverAirplaneLandDesc".Translate();
                         landCommand.action = StartLanding;
                     }
                 }
                 else
                 {
-                    landCommand.defaultLabel = "Aterrizar";
-                    landCommand.defaultDesc = "El vehículo desciende y aterriza.";
+                    landCommand.defaultLabel = "VRF_HoverLand".Translate();
+                    landCommand.defaultDesc = "VRF_HoverLandDesc".Translate();
                     landCommand.action = StartLanding;
                     IntVec3 landPos = new IntVec3(Mathf.RoundToInt(realPos.x - 0.5f), 0, Mathf.RoundToInt(realPos.y - 0.5f));
                     if (landPos.InBounds(Vehicle.Map) && Ext_Vehicles.IsRoofed(landPos, Vehicle.Map))
@@ -260,12 +260,12 @@ namespace VehicleRaid
                 {
                     faceTargetCommand.Disabled = !Vehicle.HasEnoughOperators;
                     if (!Vehicle.HasEnoughOperators)
-                        faceTargetCommand.disabledReason = "El vehículo necesita un piloto.";
+                        faceTargetCommand.disabledReason = "VRF_HoverNeedsPilot".Translate();
                     yield return faceTargetCommand;
 
                     attackTargetCommand.Disabled = !Vehicle.HasEnoughOperators;
                     if (!Vehicle.HasEnoughOperators)
-                        attackTargetCommand.disabledReason = "El vehículo necesita un piloto.";
+                        attackTargetCommand.disabledReason = "VRF_HoverNeedsPilot".Translate();
                     yield return attackTargetCommand;
                 }
 
@@ -597,12 +597,12 @@ namespace VehicleRaid
 
                 if (engineBroken && !engineNotificationSent && Vehicle.Faction == Faction.OfPlayer)
                 {
-                    Messages.Message(Vehicle.LabelShort + " se le ha roto el motor.", Vehicle, MessageTypeDefOf.NegativeEvent);
+                    Messages.Message("VRF_HoverEngineBroken".Translate(Vehicle.LabelShort), Vehicle, MessageTypeDefOf.NegativeEvent);
                     engineNotificationSent = true;
                 }
                 if (fuelTankBroken && !fuelTankNotificationSent && Vehicle.Faction == Faction.OfPlayer)
                 {
-                    Messages.Message(Vehicle.LabelShort + " se le ha roto el tanque de combustible.", Vehicle, MessageTypeDefOf.NegativeEvent);
+                    Messages.Message("VRF_HoverFuelTankBroken".Translate(Vehicle.LabelShort), Vehicle, MessageTypeDefOf.NegativeEvent);
                     fuelTankNotificationSent = true;
                 }
 

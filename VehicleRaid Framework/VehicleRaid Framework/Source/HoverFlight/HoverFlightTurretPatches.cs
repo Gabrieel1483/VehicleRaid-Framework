@@ -3,6 +3,9 @@ using Vehicles;
 using Verse;
 using RimWorld;
 using System.Reflection;
+using System.Collections.Generic;
+using SmashTools.Rendering;
+using Vehicles.Rendering;
 
 namespace VehicleRaid
 {
@@ -87,6 +90,59 @@ namespace VehicleRaid
             if (roof == RoofDefOf.RoofConstructed) return false;
             if (roof == RoofDefOf.RoofRockThin) return false;
             return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(VehicleTurret), "AlignToTargetRestricted")]
+    public static class VehicleHover_AlignToTargetRestricted_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(VehicleTurret __instance)
+        {
+            var vehicle = __instance.vehicle;
+            if (vehicle == null) return;
+            var hoverComp = vehicle.GetComp<CompVehicleHover>();
+            if (hoverComp == null || hoverComp.State == HoverState.Grounded) return;
+
+            __instance.TurretRotationTargeted -= vehicle.Transform.rotation;
+        }
+    }
+
+    [HarmonyPatch(typeof(VehicleTurret), "AlignToAngleRestricted")]
+    public static class VehicleHover_AlignToAngleRestricted_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(VehicleTurret __instance)
+        {
+            var vehicle = __instance.vehicle;
+            if (vehicle == null) return;
+            var hoverComp = vehicle.GetComp<CompVehicleHover>();
+            if (hoverComp == null || hoverComp.State == HoverState.Grounded) return;
+
+            __instance.TurretRotationTargeted -= vehicle.Transform.rotation;
+        }
+    }
+
+    [HarmonyPatch(typeof(VehicleTurret), "TurretTargeterTick")]
+    public static class VehicleHover_TurretTargeterTick_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(VehicleTurret __instance)
+        {
+            if (__instance.PrefireTickCount > 0)
+            {
+                var vehicle = __instance.vehicle;
+                if (vehicle == null) return;
+                var hoverComp = vehicle.GetComp<CompVehicleHover>();
+                if (hoverComp == null || hoverComp.State == HoverState.Grounded) return;
+
+                __instance.TurretRotationTargeted -= vehicle.Transform.rotation;
+                
+                if (__instance.def.autoSnapTargeting)
+                {
+                    __instance.TurretRotation = __instance.TurretRotationTargeted;
+                }
+            }
         }
     }
 }

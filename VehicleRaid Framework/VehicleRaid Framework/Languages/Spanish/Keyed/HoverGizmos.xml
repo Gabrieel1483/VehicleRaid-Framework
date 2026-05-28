@@ -11,6 +11,13 @@
   <VRF_HoverCancelTarget>Cancelar objetivo</VRF_HoverCancelTarget>
   <VRF_HoverCancelTargetDesc>Cancela el seguimiento automático y la orden de ataque al objetivo actual.</VRF_HoverCancelTargetDesc>
   <VRF_HoverEngineOff>El motor debe estar encendido para despegar.</VRF_HoverEngineOff>
+  <VRF_HoverCancelLanding>Cancelar aterrizaje</VRF_HoverCancelLanding>
+  <VRF_HoverCancelLandingDesc>Cancela la aproximación de aterrizaje.</VRF_HoverCancelLandingDesc>
+  <VRF_HoverAirplaneLandDesc>Selecciona una zona de aterrizaje. El avión necesita una pista despejada en la dirección de aproximación.</VRF_HoverAirplaneLandDesc>
+  <VRF_HoverNeedsPilot>El vehículo necesita un piloto.</VRF_HoverNeedsPilot>
+  <VRF_HoverEngineBroken>El motor de {0} ha sido destruido.</VRF_HoverEngineBroken>
+  <VRF_HoverFuelTankBroken>El tanque de combustible de {0} ha sido destruido.</VRF_HoverFuelTankBroken>
+  <VRF_HoverCannotTurnOffEngine>No se puede apagar el motor mientras el vehículo está en vuelo.</VRF_HoverCannotTurnOffEngine>
   <VRF_HoverJump>Salta</VRF_HoverJump>
   <VRF_HoverJumpDesc>Ordena a un colono saltar del vehículo con un paracaídas.</VRF_HoverJumpDesc>
   <VRF_HoverNoPilot>Sin piloto a bordo. El vehículo se estrellará.</VRF_HoverNoPilot>

@@ -54,13 +54,13 @@ namespace VehicleRaidFramework
             int ticksLeft = faction.lastTraderRequestTick + 240000 - Find.TickManager.TicksGame;
             if (ticksLeft > 0)
             {
-                opt.Disable("Wait time: " + ticksLeft.ToStringTicksToPeriod());
+                opt.Disable("WaitTime".Translate(ticksLeft.ToStringTicksToPeriod()));
                 return opt;
             }
 
             if (!faction.def.allowedArrivalTemperatureRange.ExpandedBy(-4f).Includes(map.mapTemperature.SeasonalTemp))
             {
-                opt.Disable("Bad temperature");
+                opt.Disable("BadTemperature".Translate());
                 return opt;
             }
 
@@ -69,24 +69,42 @@ namespace VehicleRaidFramework
             var heliExt = incident.GetModExtension<HelicopterIncidentExtension>();
             if (heliExt?.traderKind != null)
             {
-                string choiceLabel = heliExt.traderKind.LabelCap;
-                if (choiceLabel.NullOrEmpty()) choiceLabel = heliExt.traderKind.defName;
+                TraderKindDef tk = heliExt.traderKind;
+                DiaOption choice = new DiaOption(tk.LabelCap.NullOrEmpty() ? tk.defName : tk.LabelCap);
 
-                DiaOption choice = new DiaOption(choiceLabel);
-                choice.action = () =>
+                if (tk.TitleRequiredToTrade != null &&
+                    (negotiator.royalty == null ||
+                     tk.TitleRequiredToTrade.seniority > negotiator.GetCurrentTitleSeniorityIn(faction)))
                 {
-                    IncidentParms parms = new IncidentParms
+                    DiaNode deniedNode = new DiaNode("TradeCaravanRequestDeniedDueTitle".Translate(
+                        negotiator.Named("NEGOTIATOR"),
+                        tk.TitleRequiredToTrade.GetLabelCapFor(negotiator).Named("TITLE"),
+                        faction.Named("FACTION")));
+                    DiaOption goBack = new DiaOption("GoBack".Translate());
+                    deniedNode.options.Add(goBack);
+                    choice.link = deniedNode;
+                    goBack.link = confirmNode;
+                }
+                else if (tk.permitRequiredForTrading != null &&
+                         !map.mapPawns.FreeColonists.Any(p =>
+                             p.royalty != null && p.royalty.HasPermit(tk.permitRequiredForTrading, faction)))
+                {
+                    choice.Disable("TradeCaravanRequestDeniedDueTitle".Translate(
+                        negotiator.Named("NEGOTIATOR"),
+                        tk.permitRequiredForTrading.label.Named("TITLE"),
+                        faction.Named("FACTION")));
+                }
+                else
+                {
+                    choice.action = () =>
                     {
-                        target = map,
-                        faction = faction,
-                        traderKind = heliExt.traderKind,
-                        forced = true
+                        IncidentParms parms = new IncidentParms { target = map, faction = faction, traderKind = tk, forced = true };
+                        Find.Storyteller.incidentQueue.Add(incident, Find.TickManager.TicksGame + delayTicks, parms, 240000);
+                        faction.lastTraderRequestTick = Find.TickManager.TicksGame;
+                        Faction.OfPlayer.TryAffectGoodwillWith(faction, -cost, reason: HistoryEventDefOf.RequestedTrader);
                     };
-                    Find.Storyteller.incidentQueue.Add(incident, Find.TickManager.TicksGame + delayTicks, parms, 240000);
-                    faction.lastTraderRequestTick = Find.TickManager.TicksGame;
-                    Faction.OfPlayer.TryAffectGoodwillWith(faction, -cost, reason: HistoryEventDefOf.RequestedTrader);
-                };
-                choice.resolveTree = true;
+                    choice.resolveTree = true;
+                }
                 confirmNode.options.Add(choice);
             }
             else
@@ -97,22 +115,43 @@ namespace VehicleRaidFramework
                     foreach (var mapper in ext.traderMappers)
                     {
                         if (!mapper.traderKind.requestable) continue;
+                        TraderKindDef tk = mapper.traderKind;
+                        DiaOption choice = new DiaOption(tk.LabelCap);
 
-                        DiaOption choice = new DiaOption(mapper.traderKind.LabelCap);
-                        choice.action = () =>
+                        if (tk.TitleRequiredToTrade != null &&
+                            (negotiator.royalty == null ||
+                             tk.TitleRequiredToTrade.seniority > negotiator.GetCurrentTitleSeniorityIn(faction)))
                         {
-                            IncidentParms parms = new IncidentParms
+                            DiaNode deniedNode = new DiaNode("TradeCaravanRequestDeniedDueTitle".Translate(
+                                negotiator.Named("NEGOTIATOR"),
+                                tk.TitleRequiredToTrade.GetLabelCapFor(negotiator).Named("TITLE"),
+                                faction.Named("FACTION")));
+                            DiaOption goBack = new DiaOption("GoBack".Translate());
+                            deniedNode.options.Add(goBack);
+                            choice.link = deniedNode;
+                            goBack.link = confirmNode;
+                        }
+                        else if (tk.permitRequiredForTrading != null &&
+                                 !map.mapPawns.FreeColonists.Any(p =>
+                                     p.royalty != null && p.royalty.HasPermit(tk.permitRequiredForTrading, faction)))
+                        {
+                            choice.Disable("TradeCaravanRequestDeniedDueTitle".Translate(
+                                negotiator.Named("NEGOTIATOR"),
+                                tk.permitRequiredForTrading.label.Named("TITLE"),
+                                faction.Named("FACTION")));
+                        }
+                        else
+                        {
+                            TraderKindDef captured = tk;
+                            choice.action = () =>
                             {
-                                target = map,
-                                faction = faction,
-                                traderKind = mapper.traderKind,
-                                forced = true
+                                IncidentParms parms = new IncidentParms { target = map, faction = faction, traderKind = captured, forced = true };
+                                Find.Storyteller.incidentQueue.Add(incident, Find.TickManager.TicksGame + delayTicks, parms, 240000);
+                                faction.lastTraderRequestTick = Find.TickManager.TicksGame;
+                                Faction.OfPlayer.TryAffectGoodwillWith(faction, -cost, reason: HistoryEventDefOf.RequestedTrader);
                             };
-                            Find.Storyteller.incidentQueue.Add(incident, Find.TickManager.TicksGame + delayTicks, parms, 240000);
-                            faction.lastTraderRequestTick = Find.TickManager.TicksGame;
-                            Faction.OfPlayer.TryAffectGoodwillWith(faction, -cost, reason: HistoryEventDefOf.RequestedTrader);
-                        };
-                        choice.resolveTree = true;
+                            choice.resolveTree = true;
+                        }
                         confirmNode.options.Add(choice);
                     }
                 }
@@ -120,9 +159,8 @@ namespace VehicleRaidFramework
 
             if (confirmNode.options.Count == 0) return null;
 
-            confirmNode.options.Add(new DiaOption("Go back") { linkLateBind = () => FactionDialogMaker.FactionDialogFor(negotiator, faction) });
+            confirmNode.options.Add(new DiaOption("GoBack".Translate()) { linkLateBind = () => FactionDialogMaker.FactionDialogFor(negotiator, faction) });
             opt.link = confirmNode;
-
             return opt;
         }
     }

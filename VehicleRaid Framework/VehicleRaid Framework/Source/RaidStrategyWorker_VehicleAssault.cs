@@ -10,8 +10,11 @@ namespace VehicleRaidFramework
     {
         public override bool CanUseWith(IncidentParms parms, PawnGroupKindDef groupKind)
         {
-            VehicleRaidExtension ext = GetExtension(parms);
+            VehicleRaidExtension ext = this.def?.GetModExtension<VehicleRaidExtension>();
             if (ext == null) return false;
+
+            bool hasFactionFilter = (!ext.factionDefs.NullOrEmpty()) || (ext.factionDef != null);
+            if (!hasFactionFilter) return false;
 
             if (!ext.factionDefs.NullOrEmpty())
             {
@@ -22,8 +25,13 @@ namespace VehicleRaidFramework
                 if (parms.faction == null || parms.faction.def != ext.factionDef) return false;
             }
 
-
             return base.CanUseWith(parms, groupKind);
+        }
+
+        public override float SelectionWeight(Map map, float basePoints)
+        {
+            float curveWeight = this.def?.selectionWeightPerPointsCurve?.Evaluate(basePoints) ?? 0f;
+            return curveWeight;
         }
 
         public override LordJob MakeLordJob(IncidentParms parms, Map map, List<Pawn> pawns, int raidSeed)
@@ -39,16 +47,9 @@ namespace VehicleRaidFramework
 
         private VehicleRaidExtension GetExtension(IncidentParms parms)
         {
-
             if (this.def != null)
             {
-                var ext = this.def.GetModExtension<VehicleRaidExtension>();
-                if (ext != null) return ext;
-            }
-
-            if (parms.faction?.def != null)
-            {
-                return parms.faction.def.GetModExtension<VehicleRaidExtension>();
+                return this.def.GetModExtension<VehicleRaidExtension>();
             }
 
             return null;

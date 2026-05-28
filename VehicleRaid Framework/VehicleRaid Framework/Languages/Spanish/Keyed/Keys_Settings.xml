@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <VRF_Settings_Category>Vehicle Raid Framework</VRF_Settings_Category>
+  <VRF_Settings_Title>Vehicle Raid Framework - Configuración de Raids Naturales</VRF_Settings_Title>
+  <VRF_Settings_Back>Volver</VRF_Settings_Back>
+  <VRF_Settings_Configure>Configurar</VRF_Settings_Configure>
+  <VRF_Settings_Details>Detalles</VRF_Settings_Details>
+  <VRF_Settings_NoFactions>No se encontraron facciones que puedan hacer raids.</VRF_Settings_NoFactions>
+  <VRF_Settings_NoVehicles>No se encontraron vehículos. Asegúrate de tener Vehicle Framework y un mod de vehículos cargados.</VRF_Settings_NoVehicles>
+  <VRF_Settings_FactionListDesc>Selecciona una facción para configurar qué vehículos pueden aparecer en sus raids naturales.</VRF_Settings_FactionListDesc>
+  <VRF_Settings_VehicleListDesc>Vehículos para la facción: {0}. Marca un vehículo para que aparezca en raids naturales.</VRF_Settings_VehicleListDesc>
+  <VRF_Settings_CombatPower>Poder de combate</VRF_Settings_CombatPower>
+  <VRF_Settings_TechLevel>Nivel tecnológico: {0}</VRF_Settings_TechLevel>
+  <VRF_Settings_VehicleType>Tipo: {0}</VRF_Settings_VehicleType>
+  <VRF_Settings_EnableForRaids>Habilitar en raids naturales</VRF_Settings_EnableForRaids>
+  <VRF_Settings_VehicleActive>Este vehículo aparecerá en raids naturales de esta facción.</VRF_Settings_VehicleActive>
+  <VRF_Settings_VehicleInactive>Este vehículo no aparecerá en raids naturales.</VRF_Settings_VehicleInactive>
+  <VRF_Settings_MinCombatPoints>Puntos mínimos del narrador para spawnear</VRF_Settings_MinCombatPoints>
+  <VRF_Settings_Turrets>Armas / Torretas</VRF_Settings_Turrets>
+  <VRF_Settings_TurretRange>Rango: {0} - {1}</VRF_Settings_TurretRange>
+  <VRF_Settings_CargoCapacity>Capacidad de carga: {0} kg</VRF_Settings_CargoCapacity>
+  <VRF_Settings_CargoSection>Carga [{0} kg]</VRF_Settings_CargoSection>
+  <VRF_Settings_Fuel>Combustible ({0}): {1}% — {2} / {3} kg</VRF_Settings_Fuel>
+  <VRF_Settings_Ammo>Munición ({0} — {1}): {2}% — {3} unidades ({4} kg)</VRF_Settings_Ammo>
+  <VRF_Settings_Presets>Presets</VRF_Settings_Presets>
+  <VRF_Settings_Clear>Limpiar</VRF_Settings_Clear>
+  <VRF_Settings_ClearConfirm>¿Resetear toda la configuración de vehículos por facción? Esto no se puede deshacer.</VRF_Settings_ClearConfirm>
+  <VRF_Settings_AutoLoadPresets>Cargar presets de mods automáticamente al iniciar</VRF_Settings_AutoLoadPresets>
+  <VRF_Settings_PresetExport>Exportar configuración</VRF_Settings_PresetExport>
+  <VRF_Settings_PresetFileName>Nombre del archivo:</VRF_Settings_PresetFileName>
+  <VRF_Settings_Export>Exportar</VRF_Settings_Export>
+  <VRF_Settings_PresetImport>Importar preset</VRF_Settings_PresetImport>
+  <VRF_Settings_NoPresets>No se encontraron presets.</VRF_Settings_NoPresets>
+  <VRF_Settings_FlightMode>Modo de vuelo</VRF_Settings_FlightMode>
+  <VRF_Settings_HelicopterType>Tipo helicóptero (modo hover)</VRF_Settings_HelicopterType>
+  <VRF_Settings_HoverMoveSpeed>Velocidad de movimiento hover</VRF_Settings_HoverMoveSpeed>
+  <VRF_Settings_Load>Cargar</VRF_Settings_Load>
+  <VRF_Preset_Exported>Preset exportado a: {0}</VRF_Preset_Exported>
+  <VRF_Preset_ExportFailed>Error al exportar el preset.</VRF_Preset_ExportFailed>
+  <VRF_Preset_Imported>Preset "{0}" cargado correctamente.</VRF_Preset_Imported>
+  <VRF_Preset_ImportFailed>Error al importar el preset.</VRF_Preset_ImportFailed>
+  <VRF_Preset_InvalidFile>Formato de preset inválido.</VRF_Preset_InvalidFile>
+</LanguageData>

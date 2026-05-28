@@ -25,7 +25,26 @@ namespace VehicleRaidFramework
             if (faction == null && !TryFindTraderFaction(out faction, map)) return false;
 
             var heliExt = def.GetModExtension<HelicopterIncidentExtension>();
-            TraderKindDef traderKind = parms.traderKind ?? heliExt?.traderKind ?? faction.def.caravanTraderKinds.RandomElementByWeight(x => x.CalculatedCommonality);
+
+            TraderKindDef traderKind = parms.traderKind;
+            if (traderKind == null)
+            {
+                if (heliExt?.traderKind != null)
+                {
+                    if (!TraderKindAllowed(heliExt.traderKind, map, faction)) return false;
+                    traderKind = heliExt.traderKind;
+                }
+                else
+                {
+                    if (!faction.def.caravanTraderKinds.Where(t => TraderKindAllowed(t, map, faction))
+                        .TryRandomElementByWeight(t => t.CalculatedCommonality, out traderKind))
+                        return false;
+                }
+            }
+            else
+            {
+                if (!TraderKindAllowed(traderKind, map, faction)) return false;
+            }
             VehicleMerchantExtension ext = faction.def.GetModExtension<VehicleMerchantExtension>();
             TraderVehicleMapper mapper = ext?.GetMapperFor(traderKind);
 
@@ -107,11 +126,36 @@ namespace VehicleRaidFramework
         private bool TryFindTraderFaction(out Faction faction, Map map)
         {
             var heliExt = def.GetModExtension<HelicopterIncidentExtension>();
-            return Find.FactionManager.AllFactions.Where(x => 
-                !x.IsPlayer && 
-                !x.HostileTo(Faction.OfPlayer) && 
-                (heliExt?.factionDef == null || x.def == heliExt.factionDef)
+            return Find.FactionManager.AllFactions.Where(x =>
+                !x.IsPlayer &&
+                !x.HostileTo(Faction.OfPlayer) &&
+                (heliExt?.factionDef == null || x.def == heliExt.factionDef) &&
+                x.def.caravanTraderKinds.Any(t => TraderKindAllowed(t, map, x))
             ).TryRandomElement(out faction);
+        }
+
+        private bool TraderKindAllowed(TraderKindDef traderKind, Map map, Faction faction)
+        {
+            if (traderKind.faction != null && faction.def != traderKind.faction)
+                return false;
+
+            if (ModsConfig.IdeologyActive && faction.ideos != null && traderKind.category == "Slaver")
+            {
+                foreach (Ideo ideo in faction.ideos.AllIdeos)
+                {
+                    if (!ideo.IdeoApprovesOfSlavery())
+                        return false;
+                }
+            }
+
+            if (traderKind.permitRequiredForTrading != null)
+            {
+                if (!map.mapPawns.FreeColonists.Any(p =>
+                    p.royalty != null && p.royalty.HasPermit(traderKind.permitRequiredForTrading, faction)))
+                    return false;
+            }
+
+            return true;
         }
 
         private void FillCrew(VehiclePawn v, Faction faction, Map map)

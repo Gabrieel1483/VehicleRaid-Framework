@@ -26,7 +26,14 @@ namespace VehicleRaidFramework
             TraderKindDef traderKind = parms.traderKind;
             if (traderKind == null)
             {
-                traderKind = faction.def.caravanTraderKinds.RandomElementByWeight(x => x.CalculatedCommonality);
+                if (!faction.def.caravanTraderKinds
+                    .Where(t => TraderKindAllowed(t, map, faction))
+                    .TryRandomElementByWeight(t => t.CalculatedCommonality, out traderKind))
+                    return false;
+            }
+            else
+            {
+                if (!TraderKindAllowed(traderKind, map, faction)) return false;
             }
 
             VehicleMerchantExtension ext = faction.def.GetModExtension<VehicleMerchantExtension>();
@@ -185,7 +192,36 @@ string label = "LetterLabelTraderCaravanArrival".Translate(faction.Name, traderK
 
         private bool TryFindTraderFaction(out Faction faction, Map map)
         {
-            return Find.FactionManager.AllFactions.Where(x => !x.IsPlayer && !x.HostileTo(Faction.OfPlayer) && x.def.GetModExtension<VehicleMerchantExtension>() != null).TryRandomElement(out faction);
+            return Find.FactionManager.AllFactions.Where(x =>
+                !x.IsPlayer &&
+                !x.HostileTo(Faction.OfPlayer) &&
+                x.def.GetModExtension<VehicleMerchantExtension>() != null &&
+                x.def.caravanTraderKinds.Any(t => TraderKindAllowed(t, map, x))
+            ).TryRandomElement(out faction);
+        }
+
+        private bool TraderKindAllowed(TraderKindDef traderKind, Map map, Faction faction)
+        {
+            if (traderKind.faction != null && faction.def != traderKind.faction)
+                return false;
+
+            if (ModsConfig.IdeologyActive && faction.ideos != null && traderKind.category == "Slaver")
+            {
+                foreach (Ideo ideo in faction.ideos.AllIdeos)
+                {
+                    if (!ideo.IdeoApprovesOfSlavery())
+                        return false;
+                }
+            }
+
+            if (traderKind.permitRequiredForTrading != null)
+            {
+                if (!map.mapPawns.FreeColonists.Any(p =>
+                    p.royalty != null && p.royalty.HasPermit(traderKind.permitRequiredForTrading, faction)))
+                    return false;
+            }
+
+            return true;
         }
 
         private VehiclePawn SpawnVehicleWithTrader(VehicleMerchantOption opt, Faction faction, Map map, Pawn trader, List<Pawn> allPawns)

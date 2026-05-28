@@ -11,6 +11,13 @@
   <VRF_HoverCancelTarget>Cancel target</VRF_HoverCancelTarget>
   <VRF_HoverCancelTargetDesc>Cancels the automatic tracking and the attack order on the current target.</VRF_HoverCancelTargetDesc>
   <VRF_HoverEngineOff>The engine must be turned on to takeoff.</VRF_HoverEngineOff>
+  <VRF_HoverCancelLanding>Cancel landing</VRF_HoverCancelLanding>
+  <VRF_HoverCancelLandingDesc>Cancels the landing approach.</VRF_HoverCancelLandingDesc>
+  <VRF_HoverAirplaneLandDesc>Select a landing zone. The aircraft needs a clear runway in the approach direction.</VRF_HoverAirplaneLandDesc>
+  <VRF_HoverNeedsPilot>The vehicle needs a pilot.</VRF_HoverNeedsPilot>
+  <VRF_HoverEngineBroken>{0}'s engine has been destroyed.</VRF_HoverEngineBroken>
+  <VRF_HoverFuelTankBroken>{0}'s fuel tank has been destroyed.</VRF_HoverFuelTankBroken>
+  <VRF_HoverCannotTurnOffEngine>Cannot turn off the engine while the vehicle is airborne.</VRF_HoverCannotTurnOffEngine>
   <VRF_HoverJump>Jump</VRF_HoverJump>
   <VRF_HoverJumpDesc>Order a pawn to jump from the vehicle with a parachute.</VRF_HoverJumpDesc>
   <VRF_HoverNoPilot>No pilot aboard. The vehicle will crash.</VRF_HoverNoPilot>

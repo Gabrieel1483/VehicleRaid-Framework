@@ -10,7 +10,10 @@ namespace VehicleRaidFramework
         {
             var harmony = new Harmony("VRF.VehicleRaidFramework");
             harmony.PatchAll();
-}
+
+            if (VRF_Mod.Settings != null && VRF_Mod.Settings.autoLoadPresets)
+                VRF_PresetIO.AutoLoadAllPresets(VRF_Mod.Settings);
+        }
     }
 }
 

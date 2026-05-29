@@ -22,4 +22,5 @@
   <VRF_HoverJumpDesc>Order a pawn to jump from the vehicle with a parachute.</VRF_HoverJumpDesc>
   <VRF_HoverNoPilot>No pilot aboard. The vehicle will crash.</VRF_HoverNoPilot>
   <VRF_VehicleCrashed>{0} has crashed!</VRF_VehicleCrashed>
+  <VRF_HoverLandingFailed>{0} could not find a landing path. Landing aborted.</VRF_HoverLandingFailed>
 </LanguageData>

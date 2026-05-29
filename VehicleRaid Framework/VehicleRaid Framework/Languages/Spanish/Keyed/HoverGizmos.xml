@@ -22,4 +22,5 @@
   <VRF_HoverJumpDesc>Ordena a un colono saltar del vehículo con un paracaídas.</VRF_HoverJumpDesc>
   <VRF_HoverNoPilot>Sin piloto a bordo. El vehículo se estrellará.</VRF_HoverNoPilot>
   <VRF_VehicleCrashed>¡{0} se ha estrellado!</VRF_VehicleCrashed>
+  <VRF_HoverLandingFailed>{0} no pudo encontrar una ruta de aterrizaje. Aterrizaje abortado.</VRF_HoverLandingFailed>
 </LanguageData>

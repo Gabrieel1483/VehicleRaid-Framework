@@ -61,6 +61,8 @@ namespace VehicleRaid
         private Vector2 landingOrigin;
         private Vector2 landingApproachTarget;
         private bool hasLandingApproach = false;
+        private int landingApproachTicks = 0;
+        private const int MaxLandingApproachTicks = 900;
         private bool engineNotificationSent = false;
         private bool fuelTankNotificationSent = false;
         private Rot4 pendingLandingRot = Rot4.North;
@@ -408,7 +410,8 @@ namespace VehicleRaid
         {
             if (State != HoverState.Grounded && State != HoverState.Landing) return;
 
-            Vehicle.pather.StopDead();
+            Vehicle.vehiclePather.StopDead();
+            Vehicle.jobs?.StopAll();
 
             if (State == HoverState.Grounded)
             {
@@ -495,7 +498,8 @@ namespace VehicleRaid
 
         private void ExecuteAirplaneLanding(IntVec3 landCell, Rot4 rot)
         {
-            Vehicle.pather.StopDead();
+            Vehicle.vehiclePather.StopDead();
+            Vehicle.jobs?.StopAll();
             CancelTarget();
             hasTarget = false;
             moveSpeed = 0f;
@@ -512,6 +516,7 @@ namespace VehicleRaid
 
             pendingLandingRot = rot;
             hasLandingApproach = true;
+            landingApproachTicks = 0;
 
             ApplyRotationFromAngle(flyAngle);
         }
@@ -678,6 +683,8 @@ namespace VehicleRaid
                     Vehicle.Angle = 0f;
                     Vehicle.Transform.rotation = 0f;
                     SnapPositionToGrid();
+                    realPos = new Vector2(Vehicle.Position.x + 0.5f, Vehicle.Position.z + 0.5f);
+                    Vehicle.Notify_Teleported(false, true);
                     UpdatePropellerSpeed();
                 }
             }
@@ -818,11 +825,48 @@ namespace VehicleRaid
             {
                 if (hasLandingApproach)
                 {
+                    landingApproachTicks++;
+                    if (landingApproachTicks >= MaxLandingApproachTicks)
+                    {
+                        hasLandingApproach = false;
+                        landingApproachTicks = 0;
+                        if (Vehicle.Faction == Faction.OfPlayer)
+                        {
+                            Messages.Message("VRF_HoverLandingFailed".Translate(Vehicle.LabelShort), Vehicle, MessageTypeDefOf.RejectInput);
+                        }
+                    }
+                    else
+                    {
                     Vector2 diff = landingApproachTarget - realPos;
                     float approachDist = diff.magnitude;
 
-                    float approachAngle = Mathf.Atan2(diff.x, diff.y) * Mathf.Rad2Deg;
-                    RotateTowardsAngle(approachAngle);
+                    float radPending = pendingLandingRot.AsAngle * Mathf.Deg2Rad;
+                    Vector2 runwayForward = new Vector2(Mathf.Sin(radPending), Mathf.Cos(radPending));
+                    float longDist = Vector2.Dot(diff, runwayForward);
+                    Vector2 runwayRight = new Vector2(runwayForward.y, -runwayForward.x);
+                    float latDist = Vector2.Dot(diff, runwayRight);
+
+                    float angleDiffApproach = Mathf.Abs(Mathf.DeltaAngle(currentFlyAngle, pendingLandingRot.AsAngle));
+                    bool isAligned = Mathf.Abs(latDist) < 3f && angleDiffApproach < 30f;
+
+                    if (isAligned)
+                    {
+                        float approachAngle = Mathf.Atan2(diff.x, diff.y) * Mathf.Rad2Deg;
+                        RotateTowardsAngle(approachAngle);
+                    }
+                    else
+                    {
+                        float pushBack = Mathf.Max(Mathf.Abs(latDist) * 2.5f, 5f);
+                        if (longDist < pushBack)
+                        {
+                            pushBack += (pushBack - longDist) + 20f;
+                        }
+
+                        Vector2 dynamicWaypoint = landingApproachTarget - runwayForward * pushBack;
+                        Vector2 steerDiff = dynamicWaypoint - realPos;
+                        float approachAngle = Mathf.Atan2(steerDiff.x, steerDiff.y) * Mathf.Rad2Deg;
+                        RotateTowardsAngle(approachAngle);
+                    }
 
                     float rad = currentFlyAngle * Mathf.Deg2Rad;
                     realPos += new Vector2(Mathf.Sin(rad), Mathf.Cos(rad)) * speed;
@@ -844,6 +888,7 @@ namespace VehicleRaid
 
                         ticksInState = 0;
                         State = HoverState.Landing;
+                    }
                     }
                     return;
                 }
@@ -1175,6 +1220,8 @@ namespace VehicleRaid
             Vehicle.Transform.rotation = 0f;
             Vehicle.ignition.Drafted = false;
             SnapPositionToGrid();
+            realPos = new Vector2(Vehicle.Position.x + 0.5f, Vehicle.Position.z + 0.5f);
+            Vehicle.Notify_Teleported(false, true);
         }
 
         private void TryThrowFleck(FleckData fleckData, float t)

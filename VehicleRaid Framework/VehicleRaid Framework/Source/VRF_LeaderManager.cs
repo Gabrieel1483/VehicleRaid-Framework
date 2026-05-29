@@ -1,9 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
 using Vehicles;
 using RimWorld;
 using SmashTools;
+using Verse.AI;
+using Verse.AI.Group;
 
 namespace VehicleRaidFramework
 {
@@ -40,6 +43,62 @@ namespace VehicleRaidFramework
         {
             lastCacheTick = -1;
             cachedBestLeaders.Clear();
+        }
+
+        public override void MapComponentTick()
+        {
+            base.MapComponentTick();
+            
+            if (Find.TickManager.TicksGame % 60 == 0)
+            {
+                var lords = map.lordManager.lords;
+                for (int i = 0; i < lords.Count; i++)
+                {
+                    Lord lord = lords[i];
+                    if (lord.LordJob is LordJob_VehicleRaid) continue;
+
+                    bool hasVehicle = false;
+                    for (int j = 0; j < lord.ownedPawns.Count; j++)
+                    {
+                        if (lord.ownedPawns[j] is VehiclePawn)
+                        {
+                            hasVehicle = true;
+                            break;
+                        }
+                    }
+
+                    if (hasVehicle)
+                    {
+                        for (int j = lord.ownedPawns.Count - 1; j >= 0; j--)
+                        {
+                            Pawn pawn = lord.ownedPawns[j];
+                            if (pawn is VehiclePawn v)
+                            {
+                                string dName = v.mindState.duty?.def?.defName;
+                                if (dName != null && (dName.IndexOf("Exit", StringComparison.OrdinalIgnoreCase) >= 0 || 
+                                                      dName.IndexOf("Steal", StringComparison.OrdinalIgnoreCase) >= 0 || 
+                                                      dName.IndexOf("Kidnap", StringComparison.OrdinalIgnoreCase) >= 0 || 
+                                                      dName.IndexOf("Flee", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                                      dName.IndexOf("Panic", StringComparison.OrdinalIgnoreCase) >= 0))
+                                {
+                                    var exitDef = VRF_DutyDefOf.VRF_VehicleExitMap ?? DefDatabase<DutyDef>.GetNamed("VRF_VehicleExitMap", false) ?? DutyDefOf.ExitMapBest;
+                                    if (v.mindState.duty.def != exitDef) v.mindState.duty = new PawnDuty(exitDef);
+                                    continue;
+                                }
+
+                                if (CrewManager.HasOperationalDriver(v) || CrewManager.AnyFriendlyInfantryNearby(v) || CrewManager.IsAnyPawnBoarding(v))
+                                {
+                                    var dutyDef = VRF_DutyDefOf.VRF_VehicleSearchAndDestroy ?? DefDatabase<DutyDef>.GetNamed("VRF_VehicleSearchAndDestroy", false);
+                                    if (v.mindState.duty == null || v.mindState.duty.def != dutyDef)
+                                    {
+                                        v.mindState.duty = new PawnDuty(dutyDef);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         public VehiclePawn GetBestLeader(Faction faction, IEnumerable<Pawn> candidates = null)
